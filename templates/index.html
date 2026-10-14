@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSYFUSION | Premium AI Counseling</title>
+    <!-- Polling implemented via JavaScript for seamless animations -->
+    <!-- Premium Web Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Puter.js for Frontier Conversational AI (Answers Anything, Zero API Key Required) -->
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <style>
+        :root {
+            --cyan: #00f3ff;
+            --electric-blue: #0066ff;
+            --violet: #7a00ff;
+            --magenta: #ff007f;
+            --neon-green: #00ffaa;
+            --bg-navy: #04060d;
+            --glass-bg: rgba(10, 14, 25, 0.65);
+            --glass-border: rgba(200, 210, 230, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-navy);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Custom Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(4, 6, 13, 0.8);
+            border-left: 1px solid rgba(0, 243, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--cyan), var(--violet));
+            border-radius: 10px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, var(--cyan), var(--magenta));
+        }
+
+        /* ---------------- BACKGROUND LAYER ---------------- */
+        #bgCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -3;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, transparent 30%, #020308 100%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .scan-lines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
+            z-index: 998;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* ---------------- HEADER ---------------- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 30px 60px;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            position: relative;
+            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rgbText 4s linear infinite;
+        }
+        @keyframes rgbText {
+            to { background-position: 200% center; }
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: var(--neon-green);
+            letter-spacing: 2px;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.4);
+        }
+
+        .radar {
+            position: relative;
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border: 1px dashed rgba(0, 255, 170, 0.3);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .radar::before {
+            content: ''; position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border-top: 2px solid var(--neon-green);
+            animation: spin 3s linear infinite;
+        }
+
+        .live-dot {
+            width: 10px; height: 10px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--neon-green), 0 0 30px var(--neon-green);
+            animation: breathe 2s infinite alternate ease-in-out;
+        }
+
+        /* ---------------- MAIN CONTENT ---------------- */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 60px 40px;
+            z-index: 10;
+        }
+
+        .hero-titles {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .hero-titles h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--cyan), var(--violet), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(122, 0, 255, 0.3);
+        }
+
+        .hero-titles p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            color: #c4ccde;
+            letter-spacing: 1px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* HUD Lines near titles */
+        .hero-titles::before, .hero-titles::after {
+            content: ''; position: absolute;
+            top: 50%; width: 100px; height: 1px;
+            background: rgba(0, 243, 255, 0.3);
+        }
+        .hero-titles::before { left: -150px; }
+        .hero-titles::after { right: -150px; }
+
+        /* ---------------- BUTTON GRID ---------------- */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            width: 100%;
+            max-width: 1400px;
+            margin-bottom: 40px;
+        }
+
+        .cyber-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 12px 25px 12px 15px;
+            display: flex;
+            align-items: center;
+            color: #fff;
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.05), 0 8px 25px rgba(0,0,0,0.4);
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .cyber-btn::before {
+            content: ''; position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--cyan), transparent, var(--violet));
+            z-index: -1;
+            opacity: 0.4;
+            transition: 0.4s;
+            animation: pulseGlow 4s infinite alternate;
+        }
+
+        .cyber-btn:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.2), 0 15px 30px rgba(0,0,0,0.6);
+            border-color: rgba(0, 243, 255, 0.6);
+            background: rgba(15, 22, 45, 0.8);
+        }
+
+        .cyber-btn:hover::before { opacity: 1; }
+
+        .icon-box {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            background: rgba(0, 243, 255, 0.1);
+            display: flex; justify-content: center; align-items: center;
+            margin-right: 15px;
+            font-size: 1.4rem;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            transition: 0.4s;
+            position: relative;
+        }
+        
+        .icon-box::after {
+            content: ''; position: absolute;
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 1px solid transparent;
+            border-top-color: var(--cyan);
+            animation: spin 4s linear infinite;
+            opacity: 0.5;
+        }
+
+        .cyber-btn:hover .icon-box {
+            background: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 25px var(--cyan);
+            color: #fff;
+        }
+
+        /* Button HUD Details */
+        .hud-tick {
+            position: absolute; top: 10px; right: 15px;
+            width: 12px; height: 2px; background: rgba(0,243,255,0.4);
+        }
+        .hud-dot {
+            position: absolute; bottom: 12px; right: 15px;
+            width: 4px; height: 4px; background: var(--violet); border-radius: 50%;
+        }
+
+        /* ---------------- DASHBOARD PANELS ---------------- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+            flex-grow: 1;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Panel HUD Decorations */
+        .glass-panel::after {
+            content: ''; position: absolute;
+            top: 20px; right: 20px;
+            width: 30px; height: 30px;
+            border-top: 2px solid rgba(0, 243, 255, 0.3);
+            border-right: 2px solid rgba(0, 243, 255, 0.3);
+        }
+        .glass-panel::before {
+            content: ''; position: absolute;
+            bottom: 20px; left: 20px;
+            width: 30px; height: 30px;
+            border-bottom: 2px solid rgba(255, 0, 127, 0.3);
+            border-left: 2px solid rgba(255, 0, 127, 0.3);
+        }
+
+        .panel-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: #d0d6e8;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-title::before {
+            content: ''; display: inline-block;
+            width: 8px; height: 8px; background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* Left Panel Sections */
+        .left-panel { gap: 20px; justify-content: space-between; }
+        .data-section {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,243,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .data-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+            margin-bottom: 10px;
+        }
+
+        /* Data Animation Graphics */
+        .graph-track {
+            height: 40px; width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex; align-items: center;
+        }
+        .svg-graph {
+            width: 100%; height: 100%;
+            fill: none; stroke-width: 2;
+        }
+        .facial-wave { stroke: var(--cyan); stroke-dasharray: 200; animation: scanLine 2s linear infinite; }
+        .vocal-wave { stroke: var(--magenta); stroke-dasharray: 300; animation: scanLine 3s linear infinite reverse; }
+
+        @keyframes scanLine {
+            to { stroke-dashoffset: -400; }
+        }
+
+        /* Right Panel */
+        .right-panel {
+            align-items: center;
+            text-align: center;
+        }
+        
+        .huge-emotion {
+            font-family: 'Cinzel', serif;
+            font-size: 5.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--cyan), var(--violet), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin: 20px 0;
+            animation: glowText 4s infinite alternate;
+            filter: drop-shadow(0 0 20px rgba(122, 0, 255, 0.4));
+        }
+
+        .explanation {
+            font-size: 1.15rem;
+            color: #b4bccf;
+            line-height: 1.6;
+            max-width: 80%;
+            margin-top: 20px;
+            font-weight: 400;
+        }
+
+        /* ---------------- HUD CONTROLS BOTTOM RIGHT ---------------- */
+        .hud-controls {
+            position: fixed;
+            bottom: 30px; right: 40px;
+            display: flex; gap: 15px;
+            z-index: 100;
+        }
+        .hud-icon {
+            width: 35px; height: 35px;
+            border-radius: 6px;
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            color: rgba(0, 243, 255, 0.6);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .hud-icon:hover {
+            background: rgba(0, 243, 255, 0.2);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0,243,255,0.4);
+        }
+
+        /* Animations */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes breathe { 0% { opacity: 0.4; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1.1); } }
+        @keyframes pulseGlow { 0% { opacity: 0.3; } 100% { opacity: 0.6; } }
+        @keyframes glowText { 0% { filter: drop-shadow(0 0 15px rgba(122,0,255,0.3)); } 100% { filter: drop-shadow(0 0 35px rgba(0,243,255,0.6)); } }
+        
+        /* ---------------- CHATGPT-STYLE MEDICAL ASSISTANT SIDEBAR ---------------- */
+        #chatbot-sidebar {
+            position: fixed;
+            top: 0; right: -850px;
+            width: 490px; height: 100vh;
+            max-width: 95vw;
+            background: rgba(5, 8, 18, 0.96);
+            backdrop-filter: blur(24px);
+            border-left: 1px solid rgba(0, 243, 255, 0.4);
+            box-shadow: -15px 0 45px rgba(0, 0, 0, 0.85);
+            z-index: 2500;
+            transition: right 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #chatbot-sidebar.open {
+            right: 0;
+        }
+
+        #chatbot-sidebar.open.expanded {
+            width: min(740px, 94vw);
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            background: linear-gradient(90deg, rgba(122,0,255,0.25), rgba(0,243,255,0.25));
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chat-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Playfair Display', serif;
+            color: #00f3ff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .chat-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #00ffaa;
+            letter-spacing: 1px;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-hdr-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #c4d7f5;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .chat-hdr-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            color: #fff;
+            border-color: #00f3ff;
+        }
+
+        .chat-hdr-btn.btn-close:hover {
+            background: rgba(255, 0, 127, 0.3);
+            border-color: #ff007f;
+            color: #fff;
+        }
+
+        .chat-telemetry-banner {
+            padding: 8px 18px;
+            background: rgba(0, 243, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.15);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: #9cb5e5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-body {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Cyber Scrollbar */
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .chat-body::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.3); border-radius: 3px; }
+        .chat-body::-webkit-scrollbar-thumb:hover { background: rgba(0,243,255,0.6); }
+
+        .chat-bubble {
+            max-width: 88%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            word-break: break-word;
+            position: relative;
+        }
+
+        .bubble-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .bot-bubble {
+            background: rgba(14, 22, 44, 0.9);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #e2e8f8;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 0 15px rgba(0,243,255,0.04);
+        }
+
+        .bot-bubble .bubble-author { color: #00f3ff; }
+
+        .user-bubble {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.25), rgba(122, 0, 255, 0.35));
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            color: #ffffff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .user-bubble .bubble-author { color: #a4ccff; }
+
+        /* Streaming Typewriter Cursor */
+        .typing-cursor {
+            color: #00f3ff;
+            font-weight: bold;
+            animation: cursorBlink 0.7s infinite alternate;
+            margin-left: 2px;
+        }
+
+        @keyframes cursorBlink {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* 3-Dot Bouncing Typing Indicator */
+        .typing-dots {
+            display: inline-flex;
+            gap: 5px;
+            padding: 4px 8px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 7px; height: 7px;
+            background: #00f3ff;
+            border-radius: 50%;
+            animation: dotBounce 1.3s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Quick Prompt Options */
+        .chat-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 18px 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.15);
+            background: rgba(3, 6, 14, 0.8);
+        }
+
+        .quick-reply-btn {
+            background: rgba(0, 243, 255, 0.08);
+            border: 1px solid rgba(0, 243, 255, 0.35);
+            color: #00f3ff;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.80rem;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .quick-reply-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: #00f3ff;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.3);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        /* Chat Input Area */
+        .chat-input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 14px 18px 16px;
+            border-top: 1px solid rgba(0, 243, 255, 0.25);
+            background: rgba(4, 7, 16, 0.95);
+            gap: 8px;
+        }
+
+        .chat-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-input-area textarea {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #fff;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            height: 44px;
+            max-height: 120px;
+            line-height: 1.4;
+            transition: border-color 0.25s;
+        }
+
+        .chat-input-area textarea:focus {
+            border-color: #00f3ff;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.3), rgba(122, 0, 255, 0.5));
+            border: 1px solid rgba(0, 243, 255, 0.6);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            transition: all 0.25s ease;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chat-send-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.5), rgba(122, 0, 255, 0.7));
+            box-shadow: 0 0 16px rgba(0, 243, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .chat-footer-note {
+            font-size: 0.72rem;
+            color: #7284a8;
+            font-family: 'Share Tech Mono', monospace;
+            text-align: center;
+        }
+
+        /* High-Tech Medical Injection Syringe & Biometric Optical Lens Cursors */
+        :root {
+            --cursor-syringe: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='1.5' cy='1.5' r='1.5' fill='%2300f3ff'/><line x1='1.5' y1='1.5' x2='9' y2='9' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/><polygon points='7,10 10,7 12,9 9,12' fill='%238fa0c0' stroke='%2300f3ff' stroke-width='0.8'/><polygon points='8.5,14.5 18,5 23,10 13.5,19.5' fill='rgba(6,16,36,0.95)' stroke='%2300f3ff' stroke-width='1.4'/><polygon points='10.5,13.5 16,8 20,12 14.5,17.5' fill='%2300f3ff' opacity='0.75'/><line x1='12' y1='13' x2='14' y2='11' stroke='%23ffffff' stroke-width='1' opacity='0.9'/><line x1='14.5' y1='15.5' x2='16.5' y2='13.5' stroke='%23ffffff' stroke-width='1' opacity='0.9'/><line x1='17' y1='18' x2='19' y2='16' stroke='%23ffffff' stroke-width='1' opacity='0.9'/><line x1='17' y1='23' x2='23' y2='17' stroke='%2300f3ff' stroke-width='2.2' stroke-linecap='round'/><line x1='20' y1='20' x2='27' y2='27' stroke='%23c0d0ea' stroke-width='2' stroke-linecap='round'/><line x1='24' y1='30' x2='30' y2='24' stroke='%23ff007f' stroke-width='2.6' stroke-linecap='round'/></svg>") 1 1;
+            --cursor-lens: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%2300f3ff' stroke-width='1.5' stroke-dasharray='4,2' opacity='0.9'/><circle cx='16' cy='16' r='7.5' fill='rgba(0,243,255,0.2)' stroke='%23ff007f' stroke-width='1.2'/><line x1='16' y1='1' x2='16' y2='8' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><line x1='16' y1='24' x2='16' y2='31' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><line x1='1' y1='16' x2='8' y2='16' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><line x1='24' y1='16' x2='31' y2='16' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><circle cx='16' cy='16' r='2.5' fill='%2300ffaa'/><path d='M 12 12 Q 16 9 20 12' fill='none' stroke='%23ffffff' stroke-width='1.2' opacity='0.85'/></svg>") 16 16;
+        }
+
+        body {
+            cursor: var(--cursor-syringe), auto !important;
+        }
+
+        body.cursor-mode-lens {
+            cursor: var(--cursor-lens), auto !important;
+        }
+
+        a, button, input, textarea, select, .cyber-btn, .hud-icon, .hud-btn, .quick-reply-btn, .chat-send-btn, .chat-hdr-btn {
+            cursor: var(--cursor-lens), pointer !important;
+        }
+
+        body.cursor-mode-syringe a, 
+        body.cursor-mode-syringe button, 
+        body.cursor-mode-syringe .cyber-btn,
+        body.cursor-mode-syringe .hud-icon {
+            cursor: var(--cursor-syringe), pointer !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cinematic Background -->
+    <canvas id="bgCanvas"></canvas>
+    <div class="vignette"></div>
+    <div class="scan-lines"></div>
+
+    <header>
+        <div class="logo">PSYFUSION</div>
+        <div class="live-indicator">
+            <div class="radar">
+                <div class="live-dot"></div>
+            </div>
+            LIVE
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <div class="hero-titles">
+            <h1>Premium AI Counseling</h1>
+            <p>Real-Time Multimodal Detection of Culturally Masked Emotions & Clinical Risk Assessment</p>
+        </div>
+
+        <div class="btn-grid">
+            <a href="/start" class="cyber-btn">
+                <div class="icon-box">▷</div> Initialize Session
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+            <a href="/emotion" class="cyber-btn">
+                <div class="icon-box">👁</div> Face Analysis
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+            <a href="/voice" class="cyber-btn">
+                <div class="icon-box">〰</div> Voice Prosody
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+
+            <a href="/masking" class="cyber-btn">
+                <div class="icon-box">🎭</div> Masking Detect
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+            <a href="/risk" class="cyber-btn">
+                <div class="icon-box">⚠</div> Risk Level
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+            <a href="javascript:void(0)" onclick="toggleChatbot()" class="cyber-btn">
+                <div class="icon-box">💡</div> Medical AI Chat
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+            <a href="/synthesis" class="cyber-btn">
+                <div class="icon-box">⚡</div> Synthesis Data
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+
+            <a href="/report" class="cyber-btn">
+                <div class="icon-box">📄</div> Export Report
+                <div class="hud-tick"></div><div class="hud-dot"></div>
+            </a>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="glass-panel left-panel">
+                <div class="data-section">
+                    <div class="panel-title">FACIAL EMOTION</div>
+                    <div class="data-val" id="val-face">{{ face }}</div>
+                    <div class="graph-track">
+                        <svg class="svg-graph" viewBox="0 0 200 40">
+                            <path class="facial-wave" d="M0,20 Q25,0 50,20 T100,20 T150,20 T200,20 T250,20 T300,20" />
+                            <circle cx="50" cy="20" r="3" fill="#00f3ff">
+                                <animate attributeName="cx" values="0;200" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="data-section">
+                    <div class="panel-title">VOCAL EMOTION</div>
+                    <div class="data-val" id="val-voice">{{ voice }}</div>
+                    <div class="graph-track">
+                        <svg class="svg-graph" viewBox="0 0 200 40">
+                            <path class="vocal-wave" d="M0,20 Q30,40 60,20 T120,20 T180,20 T240,20" />
+                            <circle cx="120" cy="20" r="3" fill="#ff007f">
+                                <animate attributeName="cx" values="200;0" dur="3s" repeatCount="indefinite" />
+                            </circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="data-section">
+                    <div class="panel-title">MASKING INDEX</div>
+                    <div class="data-val" id="val-masking">{{ masking }}%</div>
+                </div>
+                <div class="data-section">
+                    <div class="panel-title">RISK LEVEL</div>
+                    <div class="data-val" id="val-risk">{{ risk }}</div>
+                </div>
+            </div>
+
+            <div class="glass-panel right-panel">
+                <div class="panel-title" style="margin-bottom: 0;">OVERALL COMPARISON</div>
+                <div style="position: relative; width: 100%; height: 200px; margin: 20px 0; border-radius: 10px; border: 1px solid rgba(255, 0, 255, 0.3); background: rgba(0,0,0,0.5); overflow: hidden;">
+                    <canvas id="comparisonCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+                    <div class="huge-emotion" id="val-comparison" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)); font-size: 4.5rem; z-index: 10;">
+                        {{ comparison }}
+                    </div>
+                </div>
+                <div class="panel-title" style="font-size: 1rem; color: #8a96b3;">CLINICAL EXPLANATION</div>
+                <div class="explanation" id="val-explanation">{{ explanation }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hud-controls">
+        <div class="hud-icon" id="cursor-toggle-btn" title="Toggle Cursor: Syringe / Lens" onclick="cycleCursorMode()">💉</div>
+        <div class="hud-icon" title="Network Status">⚯</div>
+        <div class="hud-icon" title="Sync Data">↻</div>
+        <div class="hud-icon" title="System Settings">⎚</div>
+    </div>
+
+    <!-- Chatbot Sidebar -->
+    <div id="chatbot-sidebar">
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <div class="chat-header-title">
+                    <span>🧠</span> PSYFUSION Clinical GPT
+                </div>
+                <div class="chat-status-pill">
+                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00ffaa; box-shadow:0 0 8px #00ffaa;"></span>
+                    <span>ONLINE • MULTIMODAL SYNTHESIS</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="chat-hdr-btn" id="expand-chat-btn" onclick="toggleExpandChat()" title="Expand / Shrink View">⛶</button>
+                <button class="chat-hdr-btn" onclick="clearChat()" title="Clear Chat History">🗑</button>
+                <button class="chat-hdr-btn btn-close" onclick="toggleChatbot()" title="Close Chat">✕</button>
+            </div>
+        </div>
+
+        <div class="chat-telemetry-banner" id="chat-telemetry-banner">
+            <span>TELEMETRY: <strong id="chat-stat-face">{{ face }}</strong> | <strong id="chat-stat-voice">{{ voice }}</strong></span>
+            <span>MASK: <strong id="chat-stat-mask">{{ masking }}%</strong> | RISK: <strong id="chat-stat-risk">{{ risk }}</strong></span>
+        </div>
+
+        <div class="chat-body" id="chat-body">
+            <div class="chat-bubble bot-bubble">
+                <div class="bubble-author">
+                    <span>⚡</span> PSYFUSION CLINICAL GPT
+                </div>
+                <div class="bubble-text">
+                    Hello. I am your <strong>PSYFUSION Clinical Neuro-Psychiatric Assistant</strong>, powered by real-time multimodal emotion synthesis.
+                    <br><br>
+                    I have direct access to your session biometrics (Facial micro-expressions, Voice prosody/pitch, Masking index, and Risk score). How can I assist you with your mental state, emotional analysis, or clinical therapy techniques today?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Reply Options -->
+        <div class="chat-options">
+            <button class="quick-reply-btn" onclick="sendQuickReply('Explain my current risk level and clinical implications')">⚠ Explain My Risk</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Why am I masking my emotions and what does my pitch reveal?')">🎭 Why Am I Masking?</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Can you suggest a somatic or CBT therapy technique for my current state?')">🧘 Therapy Technique</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Analyze my vocal pitch, acoustic tremor, and facial micro-expressions')">🔬 Deep Biometric Scan</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Help me calm down right now with a 4-7-8 breathing protocol')">💨 Calm Down Protocol</button>
+        </div>
+
+        <div class="chat-input-area">
+            <textarea id="chat-input" placeholder="Ask anything about your emotions, mental health, or scan... (Shift+Enter for newline)" rows="1" onkeydown="handleChatKey(event)" oninput="autoResizeChatInput(this)"></textarea>
+            <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">
+                <span>SEND</span>
+                <span style="font-size:1.1rem;">➤</span>
+            </button>
+        </div>
+        <div style="padding: 4px 18px 10px; background: rgba(3, 6, 14, 0.95); border-top: 1px solid rgba(0, 243, 255, 0.1);">
+            <div class="chat-footer-note">Clinical AI is for therapeutic assistance. In severe crisis, dial 988 or seek emergency medical care.</div>
+        </div>
+    </div>
+
+    <!-- Custom Neural-Wave Topographic Canvas Background -->
+    <script>
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let time = 0;
+        
+        function drawWaves() {
+            // Dark navy background with trailing fade
+            ctx.fillStyle = 'rgba(4, 6, 13, 0.15)'; 
+            ctx.fillRect(0, 0, width, height);
+            
+            ctx.globalCompositeOperation = 'lighter';
+            
+            const lines = 45; // Thousands of thin lines effect
+            const yCenter = height * 0.55;
+            
+            for (let i = 0; i < lines; i++) {
+                ctx.beginPath();
+                
+                // Vertical spread
+                let yOffset = (i - lines/2) * 20; 
+                
+                // Slowly animate the entire layer using parallax
+                let parallaxX = Math.sin(time * 0.1) * 50;
+
+                for (let x = -100; x < width + 100; x += 40) {
+                    // Neural-wave complex math
+                    let nx = x + parallaxX;
+                    let noise1 = Math.sin(nx * 0.003 + time * 0.4 + i * 0.1);
+                    let noise2 = Math.sin(nx * 0.006 - time * 0.2 + i * 0.05);
+                    let noise3 = Math.cos(nx * 0.002 + time * 0.6 - i * 0.02);
+                    
+                    let y = yCenter + yOffset + (noise1 * 90) + (noise2 * 50) + (noise3 * 30);
+                    
+                    // Smooth hills and valleys
+                    let centerDist = Math.abs(x - width/2) / (width/2);
+                    y += Math.pow(centerDist, 2) * 150; // Curve edges down
+                    
+                    if (x === -100) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                
+                // Segmented Colors: Cyan/Blue (Left) -> Violet (Center) -> Magenta (Right/Top)
+                let grad = ctx.createLinearGradient(0, 0, width, 0);
+                grad.addColorStop(0, `rgba(0, 243, 255, ${0.05 + (i/lines)*0.15})`);
+                grad.addColorStop(0.4, `rgba(0, 102, 255, ${0.05 + (i/lines)*0.15})`);
+                grad.addColorStop(0.7, `rgba(122, 0, 255, ${0.05 + (i/lines)*0.15})`);
+                grad.addColorStop(1, `rgba(255, 0, 127, ${0.05 + (i/lines)*0.15})`);
+                
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+            }
+            
+            // Draw floating glowing digital particles
+            for(let p = 0; p < 80; p++) {
+                let px = (Math.sin(p*234 + time*0.1) * 0.5 + 0.5) * width;
+                let py = (Math.cos(p*112 + time*0.15) * 0.5 + 0.5) * height;
+                
+                // Particles mostly follow wave colors based on X position
+                let r = px > width*0.7 ? 255 : (px > width*0.4 ? 122 : 0);
+                let g = px < width*0.4 ? 243 : (px < width*0.7 ? 0 : 0);
+                let b = px > width*0.7 ? 127 : 255;
+                
+                let alpha = (Math.sin(time*2 + p)*0.5 + 0.5) * 0.8;
+                
+                ctx.beginPath();
+                ctx.arc(px, py, 1.5, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                ctx.fill();
+            }
+            
+            ctx.globalCompositeOperation = 'source-over';
+            time += 0.02; // Smooth 60FPS animation speed
+            requestAnimationFrame(drawWaves);
+        }
+        
+        drawWaves();
+
+        // LIVE DATA POLLING (Replaces Meta Refresh)
+        setInterval(() => {
+            fetch('/api/data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('val-face').innerText = data.face;
+                    document.getElementById('val-voice').innerText = data.voice;
+                    document.getElementById('val-masking').innerText = data.masking + '%';
+                    document.getElementById('val-risk').innerText = data.risk;
+                    document.getElementById('val-comparison').innerText = data.comparison;
+                    document.getElementById('val-explanation').innerText = data.explanation;
+                })
+                .catch(err => console.error("Error fetching live data:", err));
+        }, 5000);
+
+        // 3D SYNTHESIS CORE (COMPARISON) ANIMATION
+        const compCanvas = document.getElementById('comparisonCanvas');
+        if (compCanvas) {
+            const sCtx = compCanvas.getContext('2d');
+            compCanvas.width = compCanvas.parentElement.clientWidth;
+            compCanvas.height = compCanvas.parentElement.clientHeight;
+            
+            let nodes = [];
+            for(let i=0; i<80; i++) {
+                nodes.push({
+                    x: (Math.random()-0.5)*2,
+                    y: (Math.random()-0.5)*2,
+                    z: (Math.random()-0.5)*2
+                });
+            }
+            let rot = 0;
+            function drawSynthesis() {
+                sCtx.clearRect(0,0,compCanvas.width,compCanvas.height);
+                
+                let cx = compCanvas.width / 2;
+                let cy = compCanvas.height / 2;
+                
+                // Draw central glow
+                let grad = sCtx.createRadialGradient(cx, cy, 10, cx, cy, 150);
+                grad.addColorStop(0, 'rgba(0,243,255,0.4)');
+                grad.addColorStop(0.5, 'rgba(122,0,255,0.1)');
+                grad.addColorStop(1, 'transparent');
+                sCtx.fillStyle = grad;
+                sCtx.fillRect(0,0,compCanvas.width,compCanvas.height);
+
+                // Rotate and project nodes
+                let projected = [];
+                for(let n of nodes) {
+                    let len = Math.sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+                    let nx = (n.x/len) * 80; // scale
+                    let ny = (n.y/len) * 80;
+                    let nz = (n.z/len) * 80;
+
+                    let rx = nx * Math.cos(rot) - nz * Math.sin(rot);
+                    let rz = nx * Math.sin(rot) + nz * Math.cos(rot);
+                    
+                    let ry = ny * Math.cos(rot*0.5) - rz * Math.sin(rot*0.5);
+                    let fz = ny * Math.sin(rot*0.5) + rz * Math.cos(rot*0.5);
+
+                    let scale = 200 / (200 - fz);
+                    projected.push({
+                        x: cx + rx * scale,
+                        y: cy + ry * scale,
+                        z: fz,
+                        scale: scale
+                    });
+                }
+
+                sCtx.strokeStyle = 'rgba(0, 243, 255, 0.2)';
+                sCtx.lineWidth = 1;
+                for(let i=0; i<projected.length; i++) {
+                    for(let j=i+1; j<projected.length; j++) {
+                        let dx = projected[i].x - projected[j].x;
+                        let dy = projected[i].y - projected[j].y;
+                        if(dx*dx + dy*dy < 1500) {
+                            sCtx.beginPath();
+                            sCtx.moveTo(projected[i].x, projected[i].y);
+                            sCtx.lineTo(projected[j].x, projected[j].y);
+                            sCtx.stroke();
+                        }
+                    }
+                }
+
+                for(let p of projected) {
+                    sCtx.fillStyle = p.z > 0 ? '#00f3ff' : '#ff00ff';
+                    sCtx.beginPath();
+                    sCtx.arc(p.x, p.y, p.scale * 2, 0, Math.PI*2);
+                    sCtx.fill();
+                }
+
+                rot += 0.005;
+                requestAnimationFrame(drawSynthesis);
+            }
+            drawSynthesis();
+        }
+        
+        // ==========================================
+        // PSYFUSION CLINICAL GPT INTERFACE (CHATGPT-STYLE)
+        // ==========================================
+        const sidebar = document.getElementById('chatbot-sidebar');
+        const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('chat-send-btn');
+        const expandBtn = document.getElementById('expand-chat-btn');
+        let chatHistory = [];
+        let isGenerating = false;
+
+        function toggleChatbot() {
+            const isOpen = sidebar.classList.toggle('open');
+            if (isOpen) {
+                setTimeout(() => chatInput.focus(), 300);
+            }
+        }
+
+        function toggleExpandChat() {
+            const isExpanded = sidebar.classList.toggle('expanded');
+            if (expandBtn) {
+                expandBtn.innerText = isExpanded ? '⤢' : '⛶';
+                expandBtn.title = isExpanded ? 'Shrink Window' : 'Expand Window';
+            }
+        }
+
+        function clearChat() {
+            chatHistory = [];
+            chatBody.innerHTML = `
+                <div class="chat-bubble bot-bubble">
+                    <div class="bubble-author">
+                        <span>⚡</span> PSYFUSION CLINICAL GPT
+                    </div>
+                    <div class="bubble-text">
+                        Chat memory cleared. How can I assist you with your mental state, emotional analysis, or clinical therapy techniques?
+                    </div>
+                </div>
+            `;
+        }
+
+        function autoResizeChatInput(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+        }
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        function sendQuickReply(msg) {
+            if (!sidebar.classList.contains('open')) {
+                sidebar.classList.add('open');
+            }
+            if (isGenerating) return;
+            chatInput.value = '';
+            chatInput.style.height = '44px';
+            processUserMessage(msg);
+        }
+
+        function sendChatMessage() {
+            if (isGenerating) return;
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            chatInput.value = '';
+            chatInput.style.height = '44px';
+            processUserMessage(msg);
+        }
+
+        // Lightweight, robust Markdown Parser for clinical responses
+        function formatMarkdown(text) {
+            if (!text) return '';
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            // Headers
+            html = html.replace(/^### (.*$)/gim, '<h4 style="color:#00f3ff; margin:12px 0 6px; font-size:1.05rem; font-family:\'Rajdhani\',sans-serif; letter-spacing:0.5px;">$1</h4>');
+            html = html.replace(/^## (.*$)/gim, '<h3 style="color:#00f3ff; margin:14px 0 8px; font-size:1.15rem; font-family:\'Rajdhani\',sans-serif; letter-spacing:0.5px;">$1</h3>');
+            html = html.replace(/^# (.*$)/gim, '<h2 style="color:#00f3ff; margin:16px 0 10px; font-size:1.25rem; font-family:\'Rajdhani\',sans-serif; letter-spacing:1px;">$1</h2>');
+
+            // Bold & Italic
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#ffffff; font-weight:700;">$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em style="color:#9bc9ff;">$1</em>');
+
+            // Bullet Lists
+            html = html.replace(/^\s*[-*•]\s+(.*)$/gim, '<li style="margin-left:18px; margin-bottom:5px; line-height:1.5;">$1</li>');
+            html = html.replace(/(<li.*<\/li>)/s, '<ul style="padding-left:10px; margin:8px 0;">$1</ul>');
+
+            // Numbered Lists
+            html = html.replace(/^\s*(\d+)\.\s+(.*)$/gim, '<li style="margin-left:18px; margin-bottom:5px; line-height:1.5;">$2</li>');
+
+            // Paragraphs and newlines
+            html = html.replace(/\n\n+/g, '<div style="height:10px;"></div>');
+            html = html.replace(/\n/g, '<br>');
+
+            return html;
+        }
+
+        // ChatGPT-style Word-by-Word Streaming Typewriter Animation
+        function streamBotMessage(fullText, textContainer, onComplete) {
+            const words = fullText.split(/(\s+)/); // Preserves spaces
+            let index = 0;
+            let displayed = '';
+
+            const interval = setInterval(() => {
+                if (index < words.length) {
+                    displayed += words[index];
+                    index++;
+                    // Render partial text with blinking cursor
+                    textContainer.innerHTML = formatMarkdown(displayed) + '<span class="typing-cursor">▌</span>';
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                } else {
+                    clearInterval(interval);
+                    // Final markdown render without cursor
+                    textContainer.innerHTML = formatMarkdown(fullText);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                    if (onComplete) onComplete();
+                }
+            }, 24); // ~40 words/tokens per second for a smooth ChatGPT feel
+        }
+
+        async function processUserMessage(msg) {
+            isGenerating = true;
+            if (sendBtn) sendBtn.disabled = true;
+
+            // Render User Bubble
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble user-bubble';
+            userBubble.innerHTML = `
+                <div class="bubble-author">
+                    <span>👤</span> YOU
+                </div>
+                <div class="bubble-text">${msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            `;
+            chatBody.appendChild(userBubble);
+
+            // Record into multi-turn history
+            chatHistory.push({ role: 'user', content: msg });
+
+            // Create Animated Typing Indicator Bubble
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'chat-bubble bot-bubble';
+            typingBubble.id = 'typing-indicator-bubble';
+            typingBubble.innerHTML = `
+                <div class="bubble-author">
+                    <span>⚡</span> PSYFUSION AI GPT
+                </div>
+                <div class="typing-dots">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+            chatBody.appendChild(typingBubble);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // 1. Try Puter.js in Browser (Answer ANYTHING using Frontier Model)
+            if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
+                try {
+                    const faceVal = document.getElementById('chat-stat-face')?.innerText || 'Neutral';
+                    const voiceVal = document.getElementById('chat-stat-voice')?.innerText || 'Neutral';
+                    const maskVal = document.getElementById('chat-stat-mask')?.innerText || '10%';
+                    const riskVal = document.getElementById('chat-stat-risk')?.innerText || 'LOW';
+
+                    const systemInstruction = `You are PSYFUSION AI, an advanced, omni-competent conversational AI assistant like ChatGPT capable of answering ANY topic in the world with high intelligence, depth, and clarity (science, mathematics, coding, philosophy, creative writing, history, literature, general questions, and emotions).
+When relevant to psychological or emotional state, reference active session telemetry: Face: ${faceVal}, Voice: ${voiceVal}, Masking: ${maskVal}, Risk: ${riskVal}.
+Structure your answers with rich Markdown, bolding, bullet points, headers, and code blocks where helpful.`;
+
+                    const puterMessages = [
+                        { role: 'system', content: systemInstruction },
+                        ...chatHistory.slice(-6).map(h => ({
+                            role: h.role === 'user' ? 'user' : 'assistant',
+                            content: h.content
+                        }))
+                    ];
+
+                    const stream = await Promise.race([
+                        puter.ai.chat(puterMessages, { stream: true }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Puter timeout')), 6000))
+                    ]);
+
+                    if (typingBubble.parentNode) chatBody.removeChild(typingBubble);
+
+                    const botBubble = document.createElement('div');
+                    botBubble.className = 'chat-bubble bot-bubble';
+                    botBubble.innerHTML = `
+                        <div class="bubble-author">
+                            <span>⚡</span> PSYFUSION AI GPT
+                        </div>
+                        <div class="bubble-text"></div>
+                    `;
+                    chatBody.appendChild(botBubble);
+                    const textContainer = botBubble.querySelector('.bubble-text');
+
+                    let fullStreamed = '';
+                    for await (const part of stream) {
+                        const token = part?.text || '';
+                        fullStreamed += token;
+                        textContainer.innerHTML = formatMarkdown(fullStreamed) + '<span class="typing-cursor">▌</span>';
+                        chatBody.scrollTop = chatBody.scrollHeight;
+                    }
+                    textContainer.innerHTML = formatMarkdown(fullStreamed);
+                    chatHistory.push({ role: 'assistant', content: fullStreamed });
+                    isGenerating = false;
+                    if (sendBtn) sendBtn.disabled = false;
+                    return;
+                } catch (e) {
+                    console.log('Puter.js streaming bypassed, using local synthesis engine:', e);
+                }
+            }
+
+            // 2. Fallback to Local Synthesis Engine (Knowledge Base + Math + Coding + Biometrics)
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: msg,
+                    history: chatHistory.slice(-8)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (typingBubble.parentNode) {
+                    chatBody.removeChild(typingBubble);
+                }
+
+                const botText = data.response || "Knowledge synthesis completed.";
+                chatHistory.push({ role: 'assistant', content: botText });
+
+                // Create Bot Bubble with streaming container
+                const botBubble = document.createElement('div');
+                botBubble.className = 'chat-bubble bot-bubble';
+                botBubble.innerHTML = `
+                    <div class="bubble-author">
+                        <span>⚡</span> PSYFUSION AI GPT
+                    </div>
+                    <div class="bubble-text"></div>
+                `;
+                chatBody.appendChild(botBubble);
+                const textContainer = botBubble.querySelector('.bubble-text');
+
+                // Stream bot message word-by-word
+                streamBotMessage(botText, textContainer, () => {
+                    isGenerating = false;
+                    if (sendBtn) sendBtn.disabled = false;
+                });
+            })
+            .catch(err => {
+                console.error("Chat error:", err);
+                if (typingBubble.parentNode) {
+                    chatBody.removeChild(typingBubble);
+                }
+                const errBubble = document.createElement('div');
+                errBubble.className = 'chat-bubble bot-bubble';
+                errBubble.innerHTML = `
+                    <div class="bubble-author">
+                        <span>⚡</span> PSYFUSION AI GPT
+                    </div>
+                    <div class="bubble-text" style="color: #ff6b8b;">
+                        ⚠ Neural synthesis connection interrupted. Please try again.
+                    </div>
+                `;
+                chatBody.appendChild(errBubble);
+                isGenerating = false;
+                if (sendBtn) sendBtn.disabled = false;
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+
+        // Cursor Mode Switcher
+        let cursorMode = 0; // 0: Hybrid (Syringe default + Lens hover), 1: Syringe everywhere, 2: Lens everywhere
+        function cycleCursorMode() {
+            cursorMode = (cursorMode + 1) % 3;
+            const btn = document.getElementById('cursor-toggle-btn');
+            document.body.classList.remove('cursor-mode-syringe', 'cursor-mode-lens');
+            if (cursorMode === 0) {
+                if (btn) btn.innerText = '💉';
+                if (btn) btn.title = 'Cursor: Injection Syringe + Lens Hover (Hybrid)';
+            } else if (cursorMode === 1) {
+                document.body.classList.add('cursor-mode-syringe');
+                if (btn) btn.innerText = '💉';
+                if (btn) btn.title = 'Cursor: Injection Syringe Mode';
+            } else {
+                document.body.classList.add('cursor-mode-lens');
+                if (btn) btn.innerText = '🎯';
+                if (btn) btn.title = 'Cursor: Optical Biometric Lens Mode';
+            }
+        }
+    </script>
+</body>
+</html>

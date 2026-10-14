@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSYFUSION | Real-Time Biometric Analysis Telemetry</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- Puter.js for Frontier Conversational AI (Answers Anything, Zero API Key Required) -->
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <style>
+        :root {
+            --cyan: #00f3ff;
+            --electric-blue: #0066ff;
+            --violet: #7a00ff;
+            --magenta: #ff007f;
+            --neon-green: #00ffaa;
+            --neon-gold: #ffaa00;
+            --bg-navy: #03050b;
+            --glass-bg: rgba(10, 15, 28, 0.85);
+            --glass-border: rgba(0, 243, 255, 0.3);
+            --shadow-cyan: rgba(0, 243, 255, 0.35);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-navy);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Holographic Monitor Frame */
+        .cyber-curved-frame {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 999;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.95), inset 0 0 35px rgba(0, 243, 255, 0.2);
+            border: 2px solid rgba(0, 243, 255, 0.2);
+            border-radius: 20px;
+            margin: 6px;
+        }
+
+        /* Cyber Background Grid & Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.25) 51%);
+            background-size: 100% 4px;
+            z-index: 998;
+            pointer-events: none;
+            opacity: 0.45;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
+        }
+
+        /* ---------------- TOP HEADER ---------------- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 36px;
+            background: rgba(3, 5, 11, 0.9);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.25);
+            backdrop-filter: blur(16px);
+            z-index: 10;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-text {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, var(--magenta), var(--cyan), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-live {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 255, 170, 0.12);
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulsing-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: pulse 1.2s infinite alternate;
+        }
+
+        @keyframes pulse { from { opacity: 0.3; transform: scale(0.8); } to { opacity: 1; transform: scale(1.2); } }
+
+        /* Timer & Progress HUD Bar */
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 360px;
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--electric-blue), var(--cyan), var(--magenta));
+            box-shadow: 0 0 12px var(--cyan);
+            transition: width 0.3s ease;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hud-btn {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s ease;
+        }
+
+        .hud-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px var(--shadow-cyan);
+            transform: translateY(-2px);
+        }
+
+        .hud-btn-danger {
+            background: rgba(255, 0, 127, 0.15);
+            border-color: rgba(255, 0, 127, 0.5);
+            color: #ff80bf;
+        }
+
+        .hud-btn-danger:hover {
+            background: rgba(255, 0, 127, 0.3);
+            border-color: var(--magenta);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+            color: #fff;
+        }
+
+        .hud-btn-success {
+            background: rgba(0, 255, 170, 0.15);
+            border-color: rgba(0, 255, 170, 0.5);
+            color: var(--neon-green);
+        }
+
+        .hud-btn-success:hover {
+            background: rgba(0, 255, 170, 0.3);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+            color: #fff;
+        }
+
+        /* ---------------- MAIN WORKSTATION ---------------- */
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 36px 30px;
+            gap: 18px;
+            z-index: 10;
+        }
+
+        /* Holographic Video Stream Container */
+        .stream-viewport-card {
+            width: 100%;
+            max-width: 1320px;
+            background: rgba(5, 8, 18, 0.9);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 0 45px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(0, 243, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Viewport Corner Brackets */
+        .corner-tl { position: absolute; top: 10px; left: 10px; width: 22px; height: 22px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); pointer-events: none; }
+        .corner-tr { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); pointer-events: none; }
+        .corner-bl { position: absolute; bottom: 10px; left: 10px; width: 22px; height: 22px; border-bottom: 2px solid var(--magenta); border-left: 2px solid var(--magenta); pointer-events: none; }
+        .corner-br { position: absolute; bottom: 10px; right: 10px; width: 22px; height: 22px; border-bottom: 2px solid var(--magenta); border-right: 2px solid var(--magenta); pointer-events: none; }
+
+        /* Video Feed Image */
+        .stream-img {
+            width: 100%;
+            height: auto;
+            max-height: 72vh;
+            object-fit: contain;
+            border-radius: 12px;
+            background: #03050b;
+            display: block;
+        }
+
+        /* Fallback / Loader Screen */
+        .stream-placeholder {
+            width: 100%;
+            height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            background: radial-gradient(circle at center, rgba(0, 243, 255, 0.06), #020307 70%);
+            border-radius: 12px;
+        }
+
+        .radar-spinner {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 243, 255, 0.4);
+            border-top: 2px solid var(--cyan);
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Bottom Live Telemetry Badges Row */
+        .telemetry-cards-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 1320px;
+        }
+
+        .voice-range-strip {
+            width: 100%;
+            max-width: 1320px;
+            background: rgba(6, 10, 22, 0.9);
+            border: 1px solid rgba(0, 243, 255, 0.35);
+            border-radius: 12px;
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            color: #dbe4f5;
+            box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.08);
+        }
+        .strip-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .strip-label {
+            color: #8da0c7;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+        .strip-val {
+            color: var(--cyan);
+            font-weight: 700;
+        }
+        .pitch-track {
+            width: 140px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            position: relative;
+        }
+        .pitch-indicator {
+            position: absolute;
+            top: -3px;
+            left: 25%;
+            width: 12px;
+            height: 12px;
+            background: var(--cyan);
+            box-shadow: 0 0 8px var(--cyan);
+            border-radius: 50%;
+            transition: left 0.2s ease;
+        }
+
+        .telemetry-card {
+            background: rgba(8, 14, 28, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: border-color 0.3s;
+        }
+
+        .telemetry-card:hover {
+            border-color: var(--cyan);
+        }
+
+        .card-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            color: #8da0c7;
+            text-transform: uppercase;
+        }
+
+        .card-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .val-highlight { color: var(--cyan); }
+        .val-voice { color: var(--neon-green); }
+        .val-diagnosis { color: var(--neon-gold); }
+
+        /* ---------------- COMPLETION MODAL OVERLAY ---------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(2, 4, 10, 0.88);
+            backdrop-filter: blur(14px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.35s ease forwards;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+        .modal-box {
+            background: rgba(10, 16, 32, 0.95);
+            border: 2px solid var(--cyan);
+            border-radius: 20px;
+            padding: 36px 40px;
+            width: 90%;
+            max-width: 620px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 243, 255, 0.3), inset 0 0 30px rgba(0, 243, 255, 0.1);
+            position: relative;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .modal-desc {
+            font-size: 1rem;
+            color: #b9c7e2;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .modal-metric-pill {
+            background: rgba(0, 243, 255, 0.06);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            border-radius: 12px;
+            padding: 12px 8px;
+        }
+
+        .pill-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.75rem;
+            color: #8fa0c4;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .pill-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        /* ---------------- CHATGPT-STYLE MEDICAL ASSISTANT SIDEBAR ---------------- */
+        #chatbot-sidebar {
+            position: fixed;
+            top: 0; right: -850px;
+            width: 490px; height: 100vh;
+            max-width: 95vw;
+            background: rgba(5, 8, 18, 0.96);
+            backdrop-filter: blur(24px);
+            border-left: 1px solid rgba(0, 243, 255, 0.4);
+            box-shadow: -15px 0 45px rgba(0, 0, 0, 0.85);
+            z-index: 2500;
+            transition: right 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #chatbot-sidebar.open {
+            right: 0;
+        }
+
+        #chatbot-sidebar.open.expanded {
+            width: min(740px, 94vw);
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            background: linear-gradient(90deg, rgba(122,0,255,0.25), rgba(0,243,255,0.25));
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chat-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Playfair Display', serif;
+            color: #00f3ff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .chat-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #00ffaa;
+            letter-spacing: 1px;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-hdr-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #c4d7f5;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .chat-hdr-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            color: #fff;
+            border-color: #00f3ff;
+        }
+
+        .chat-hdr-btn.btn-close:hover {
+            background: rgba(255, 0, 127, 0.3);
+            border-color: #ff007f;
+            color: #fff;
+        }
+
+        .chat-telemetry-banner {
+            padding: 8px 18px;
+            background: rgba(0, 243, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.15);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            color: #9cb5e5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-body {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .chat-body::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.3); border-radius: 3px; }
+        .chat-body::-webkit-scrollbar-thumb:hover { background: rgba(0,243,255,0.6); }
+
+        .chat-bubble {
+            max-width: 88%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            word-break: break-word;
+            position: relative;
+        }
+
+        .bubble-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .bot-bubble {
+            background: rgba(14, 22, 44, 0.9);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #e2e8f8;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 0 15px rgba(0,243,255,0.04);
+        }
+
+        .bot-bubble .bubble-author { color: #00f3ff; }
+
+        .user-bubble {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.25), rgba(122, 0, 255, 0.35));
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            color: #ffffff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .user-bubble .bubble-author { color: #a4ccff; }
+
+        .typing-cursor {
+            color: #00f3ff;
+            font-weight: bold;
+            animation: cursorBlink 0.7s infinite alternate;
+            margin-left: 2px;
+        }
+
+        @keyframes cursorBlink {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 5px;
+            padding: 4px 8px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 7px; height: 7px;
+            background: #00f3ff;
+            border-radius: 50%;
+            animation: dotBounce 1.3s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        .chat-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 18px 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.15);
+            background: rgba(3, 6, 14, 0.8);
+        }
+
+        .quick-reply-btn {
+            background: rgba(0, 243, 255, 0.08);
+            border: 1px solid rgba(0, 243, 255, 0.35);
+            color: #00f3ff;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.80rem;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .quick-reply-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: #00f3ff;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.3);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        .chat-input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 14px 18px 16px;
+            border-top: 1px solid rgba(0, 243, 255, 0.25);
+            background: rgba(4, 7, 16, 0.95);
+            gap: 8px;
+        }
+
+        .chat-input-area textarea {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #fff;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            height: 44px;
+            max-height: 120px;
+            line-height: 1.4;
+            transition: border-color 0.25s;
+        }
+
+        .chat-input-area textarea:focus {
+            border-color: #00f3ff;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.3), rgba(122, 0, 255, 0.5));
+            border: 1px solid rgba(0, 243, 255, 0.6);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            transition: all 0.25s ease;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .chat-send-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.5), rgba(122, 0, 255, 0.7));
+            box-shadow: 0 0 16px rgba(0, 243, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* High-Tech Medical Injection Syringe & Biometric Optical Lens Cursors */
+        :root {
+            --cursor-syringe: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='1.5' cy='1.5' r='1.5' fill='%2300f3ff'/><line x1='1.5' y1='1.5' x2='9' y2='9' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/><polygon points='7,10 10,7 12,9 9,12' fill='%238fa0c0' stroke='%2300f3ff' stroke-width='0.8'/><polygon points='8.5,14.5 18,5 23,10 13.5,19.5' fill='rgba(6,16,36,0.95)' stroke='%2300f3ff' stroke-width='1.4'/><polygon points='10.5,13.5 16,8 20,12 14.5,17.5' fill='%2300f3ff' opacity='0.75'/><line x1='12' y1='13' x2='14' y2='11' stroke='%23ffffff' stroke-width='1' opacity='0.9'/><line x1='14.5' y1='15.5' x2='16.5' y2='13.5' stroke='%23ffffff' stroke-width='1' opacity='0.9'/><line x1='17' y1='18' x2='19' y2='16' stroke='%23ffffff' stroke-width='1' opacity='0.9'/><line x1='17' y1='23' x2='23' y2='17' stroke='%2300f3ff' stroke-width='2.2' stroke-linecap='round'/><line x1='20' y1='20' x2='27' y2='27' stroke='%23c0d0ea' stroke-width='2' stroke-linecap='round'/><line x1='24' y1='30' x2='30' y2='24' stroke='%23ff007f' stroke-width='2.6' stroke-linecap='round'/></svg>") 1 1;
+            --cursor-lens: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%2300f3ff' stroke-width='1.5' stroke-dasharray='4,2' opacity='0.9'/><circle cx='16' cy='16' r='7.5' fill='rgba(0,243,255,0.2)' stroke='%23ff007f' stroke-width='1.2'/><line x1='16' y1='1' x2='16' y2='8' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><line x1='16' y1='24' x2='16' y2='31' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><line x1='1' y1='16' x2='8' y2='16' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><line x1='24' y1='16' x2='31' y2='16' stroke='%2300f3ff' stroke-width='2' stroke-linecap='round'/><circle cx='16' cy='16' r='2.5' fill='%2300ffaa'/><path d='M 12 12 Q 16 9 20 12' fill='none' stroke='%23ffffff' stroke-width='1.2' opacity='0.85'/></svg>") 16 16;
+        }
+
+        body {
+            cursor: var(--cursor-syringe), auto !important;
+        }
+
+        body.cursor-mode-lens {
+            cursor: var(--cursor-lens), auto !important;
+        }
+
+        a, button, input, textarea, select, .hud-btn, .quick-reply-btn, .chat-send-btn, .chat-hdr-btn {
+            cursor: var(--cursor-lens), pointer !important;
+        }
+
+        body.cursor-mode-syringe a, 
+        body.cursor-mode-syringe button, 
+        body.cursor-mode-syringe .hud-btn {
+            cursor: var(--cursor-syringe), pointer !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cyber-curved-frame"></div>
+    <div class="scanlines"></div>
+    <div class="bg-grid"></div>
+
+    <!-- Header Bar -->
+    <header>
+        <div class="logo-wrap">
+            <span class="logo-text">PSYFUSION</span>
+            <div class="badge-live">
+                <div class="pulsing-dot"></div>
+                LIVE SCAN
+            </div>
+        </div>
+
+        <!-- Fast Progress Timer -->
+        <div class="progress-box">
+            <div class="progress-meta">
+                <span id="session-phase-txt">BIOMETRIC TRACKING ACTIVE</span>
+                <span id="timer-countdown">10.0s</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill-bar"></div>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <button class="hud-btn" id="cursor-toggle-btn" onclick="cycleCursorMode()" title="Toggle Cursor: Syringe / Lens" style="padding: 8px 12px;">
+                <span>💉</span>
+            </button>
+            <button class="hud-btn" onclick="toggleChatbot()" style="background: rgba(122, 0, 255, 0.25); border-color: rgba(0, 243, 255, 0.6); color: #00f3ff;">
+                <span>💡</span> Medical Chat
+            </button>
+            <button class="hud-btn hud-btn-success" onclick="completeSessionNow()">
+                <span>⚡</span> Complete & Diagnose
+            </button>
+            <button class="hud-btn hud-btn-danger" onclick="completeSessionNow()">
+                <span>⏹</span> Stop & Quit
+            </button>
+            <a href="/" class="hud-btn">
+                <span>⮌</span> Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Live Stream Interface -->
+    <main>
+        <div class="stream-viewport-card">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+
+            <img id="liveStreamFeed" 
+                 src="/video_feed" 
+                 class="stream-img" 
+                 alt="PSYFUSION Live Multimodal Telemetry"
+                 onerror="handleStreamError(this)">
+
+            <div id="streamPlaceholder" class="stream-placeholder" style="display: none;">
+                <div class="radar-spinner"></div>
+                <div style="font-family:'Rajdhani',sans-serif; letter-spacing:2px; color:var(--cyan); font-size:1.1rem; font-weight:700;">
+                    INITIALIZING CAMERA & ACOUSTIC ENGINES...
+                </div>
+                <div style="font-size:0.85rem; color:#8fa0c4;">Acquiring video stream and biometric landmarks</div>
+            </div>
+        </div>
+
+        <!-- Live Voice Range & Tone Analysis Console Strip -->
+        <div class="voice-range-strip">
+            <div class="strip-item">
+                <span class="strip-label">TIER:</span>
+                <span class="strip-val" id="hud-tier">Calibrating...</span>
+            </div>
+            <div class="strip-item">
+                <span class="strip-label">PITCH GAUGE:</span>
+                <div class="pitch-track">
+                    <div class="pitch-indicator" id="hud-pitch-indicator"></div>
+                </div>
+                <span class="strip-sub" id="hud-pitch-txt" style="color:var(--cyan); font-weight:700;">0.0 Hz</span>
+            </div>
+            <div class="strip-item">
+                <span class="strip-label">ACOUSTIC ENERGY:</span>
+                <span class="strip-val" id="hud-db">20 dB</span>
+            </div>
+            <div class="strip-item">
+                <span class="strip-label">TREMOR (CRY/SOB):</span>
+                <span class="strip-val" id="hud-jitter-txt" style="color: var(--neon-green);">0.0% (Stable)</span>
+            </div>
+        </div>
+
+        <!-- Live Metrics Bar -->
+        <div class="telemetry-cards-row">
+            <div class="telemetry-card">
+                <div class="card-label">Primary Facial Affect</div>
+                <div class="card-val val-highlight" id="hud-face">{{ face }}</div>
+            </div>
+            <div class="telemetry-card">
+                <div class="card-label">Vocal Affect (Acoustic)</div>
+                <div class="card-val val-voice" id="hud-voice">{{ voice }}</div>
+            </div>
+            <div class="telemetry-card">
+                <div class="card-label">Voice Pitch (F0)</div>
+                <div class="card-val" id="hud-card-pitch" style="color: var(--cyan);">0.0 Hz</div>
+            </div>
+            <div class="telemetry-card">
+                <div class="card-label">Vocal Tremor (Jitter)</div>
+                <div class="card-val" id="hud-card-jitter" style="color: var(--magenta);">0.0%</div>
+            </div>
+            <div class="telemetry-card">
+                <div class="card-label">Multimodal Synthesis</div>
+                <div class="card-val val-diagnosis" id="hud-diagnosis">Analyzing...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Session Finished Modal -->
+    <div class="modal-overlay" id="completionModal">
+        <div class="modal-box">
+            <h2 class="modal-title">DIAGNOSIS LOCKED</h2>
+            <p class="modal-desc">
+                High-speed biometric acquisition completed successfully. Facial micro-expressions, 3D topology, and vocal prosody have been synthesized.
+            </p>
+
+            <div class="modal-metrics-grid">
+                <div class="modal-metric-pill">
+                    <div class="pill-label">FINAL DIAGNOSIS</div>
+                    <div class="pill-value" id="final-diagnosis-val" style="color: var(--cyan);">NEUTRAL</div>
+                </div>
+                <div class="modal-metric-pill">
+                    <div class="pill-label">MASKING INDEX</div>
+                    <div class="pill-value" id="final-masking-val" style="color: var(--magenta);">10%</div>
+                </div>
+                <div class="modal-metric-pill">
+                    <div class="pill-label">CLINICAL RISK</div>
+                    <div class="pill-value" id="final-risk-val" style="color: var(--neon-green);">LOW</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <a href="/" class="hud-btn hud-btn-success" style="padding: 10px 24px; font-size: 1.05rem;">
+                    <span>📊</span> View Full Dashboard
+                </a>
+                <button class="hud-btn" onclick="toggleChatbot()" style="padding: 10px 20px; background: rgba(122, 0, 255, 0.35); border-color: #00f3ff; color: #fff;">
+                    <span>🧠</span> Chat with Clinical GPT
+                </button>
+                <a href="/report" class="hud-btn" style="padding: 10px 20px;">
+                    <span>📄</span> Export Report
+                </a>
+                <a href="/start" class="hud-btn" style="padding: 10px 20px;">
+                    <span>↻</span> New Scan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Sidebar -->
+    <div id="chatbot-sidebar">
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <div class="chat-header-title">
+                    <span>🧠</span> PSYFUSION Clinical GPT
+                </div>
+                <div class="chat-status-pill">
+                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00ffaa; box-shadow:0 0 8px #00ffaa;"></span>
+                    <span>ONLINE • MULTIMODAL SYNTHESIS</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="chat-hdr-btn" id="expand-chat-btn" onclick="toggleExpandChat()" title="Expand / Shrink View">⛶</button>
+                <button class="chat-hdr-btn" onclick="clearChat()" title="Clear Chat History">🗑</button>
+                <button class="chat-hdr-btn btn-close" onclick="toggleChatbot()" title="Close Chat">✕</button>
+            </div>
+        </div>
+
+        <div class="chat-telemetry-banner" id="chat-telemetry-banner">
+            <span>TELEMETRY: <strong id="chat-stat-face">{{ face }}</strong> | <strong id="chat-stat-voice">{{ voice }}</strong></span>
+            <span>MASK: <strong id="chat-stat-mask">10%</strong> | RISK: <strong id="chat-stat-risk">LOW</strong></span>
+        </div>
+
+        <div class="chat-body" id="chat-body">
+            <div class="chat-bubble bot-bubble">
+                <div class="bubble-author">
+                    <span>⚡</span> PSYFUSION CLINICAL GPT
+                </div>
+                <div class="bubble-text">
+                    Hello. I am your <strong>PSYFUSION Clinical Neuro-Psychiatric Assistant</strong>, powered by real-time multimodal emotion synthesis.
+                    <br><br>
+                    I have direct access to your session biometrics (Facial micro-expressions, Voice prosody/pitch, Masking index, and Risk score). How can I assist you with your mental state, emotional analysis, or clinical therapy techniques today?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Reply Options -->
+        <div class="chat-options">
+            <button class="quick-reply-btn" onclick="sendQuickReply('Explain my current risk level and clinical implications')">⚠ Explain My Risk</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Why am I masking my emotions and what does my pitch reveal?')">🎭 Why Am I Masking?</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Can you suggest a somatic or CBT therapy technique for my current state?')">🧘 Therapy Technique</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Analyze my vocal pitch, acoustic tremor, and facial micro-expressions')">🔬 Deep Biometric Scan</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Help me calm down right now with a 4-7-8 breathing protocol')">💨 Calm Down Protocol</button>
+        </div>
+
+        <div class="chat-input-area">
+            <textarea id="chat-input" placeholder="Ask anything about your emotions, mental health, or scan... (Shift+Enter for newline)" rows="1" onkeydown="handleChatKey(event)" oninput="autoResizeChatInput(this)"></textarea>
+            <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">
+                <span>SEND</span>
+                <span style="font-size:1.1rem;">➤</span>
+            </button>
+        </div>
+        <div style="padding: 4px 18px 10px; background: rgba(3, 6, 14, 0.95); border-top: 1px solid rgba(0, 243, 255, 0.1);">
+            <div class="chat-footer-note">Clinical AI is for therapeutic assistance. In severe crisis, dial 988 or seek emergency medical care.</div>
+        </div>
+    </div>
+
+    <!-- Polling & Live Telemetry Synchronization -->
+    <script>
+        let sessionTargetSec = 10.0;
+        let isCompleted = false;
+
+        function handleStreamError(img) {
+            img.style.display = 'none';
+            const ph = document.getElementById('streamPlaceholder');
+            if (ph) ph.style.display = 'flex';
+            setTimeout(() => {
+                img.src = '/video_feed?' + new Date().getTime();
+                img.style.display = 'block';
+                if (ph) ph.style.display = 'none';
+            }, 800);
+        }
+
+        function pollSessionTelemetry() {
+            if (isCompleted) return;
+
+            fetch('/api/session_telemetry')
+                .then(res => res.json())
+                .then(data => {
+                    const elapsed = (data.elapsed || 0.0).toFixed(1);
+
+                    const cd = document.getElementById('timer-countdown');
+                    if (cd) cd.innerText = elapsed + 's Active';
+
+                    const fill = document.getElementById('progress-fill-bar');
+                    if (fill) fill.style.width = '100%';
+
+                    if (data.dominant_face) {
+                        const hf = document.getElementById('hud-face');
+                        if (hf) {
+                            const conf = data.face_confidence ? ` (${data.face_confidence}%)` : '';
+                            hf.innerText = data.dominant_face + conf;
+                        }
+                    }
+
+                    if (data.dominant_voice) {
+                        const hv = document.getElementById('hud-voice');
+                        if (hv) hv.innerText = data.dominant_voice;
+                    }
+
+                    if (data.voice_pitch !== undefined) {
+                        const p = Number(data.voice_pitch || 0).toFixed(1);
+                        const hp = document.getElementById('hud-card-pitch');
+                        if (hp) hp.innerText = p + ' Hz';
+                        const hpt = document.getElementById('hud-pitch-txt');
+                        if (hpt) hpt.innerText = p + ' Hz';
+                        
+                        const ind = document.getElementById('hud-pitch-indicator');
+                        if (ind) {
+                            const norm = Math.max(0, Math.min(100, ((Number(data.voice_pitch) - 60) / 390) * 100));
+                            ind.style.left = norm + '%';
+                        }
+                    }
+
+                    if (data.voice_range_tier) {
+                        const ht = document.getElementById('hud-tier');
+                        if (ht) ht.innerText = data.voice_range_tier;
+                    }
+
+                    if (data.voice_db !== undefined) {
+                        const hdb = document.getElementById('hud-db');
+                        if (hdb) hdb.innerText = Math.round(data.voice_db) + ' dB';
+                    }
+
+                    if (data.voice_jitter !== undefined) {
+                        const j = Number(data.voice_jitter || 0).toFixed(1);
+                        const hj = document.getElementById('hud-card-jitter');
+                        if (hj) hj.innerText = j + '%';
+                        
+                        const hjt = document.getElementById('hud-jitter-txt');
+                        if (hjt) {
+                            if (Number(data.voice_jitter) > 8.0) {
+                                hjt.innerText = j + '% (Tremor / Cry)';
+                                hjt.style.color = '#ff007f';
+                            } else {
+                                hjt.innerText = j + '% (Stable)';
+                                hjt.style.color = '#00ffaa';
+                            }
+                        }
+                    }
+
+                    if (data.final_diagnosis) {
+                        const hd = document.getElementById('hud-diagnosis');
+                        if (hd) hd.innerText = data.final_diagnosis;
+                    }
+
+                    // Sync Live Chat Telemetry Banner
+                    if (data.dominant_face) {
+                        const cf = document.getElementById('chat-stat-face');
+                        if (cf) cf.innerText = data.dominant_face;
+                    }
+                    if (data.dominant_voice) {
+                        const cv = document.getElementById('chat-stat-voice');
+                        if (cv) cv.innerText = data.dominant_voice;
+                    }
+                    if (data.masking) {
+                        const cm = document.getElementById('chat-stat-mask');
+                        if (cm) cm.innerText = data.masking + '%';
+                    }
+                    if (data.risk) {
+                        const cr = document.getElementById('chat-stat-risk');
+                        if (cr) cr.innerText = data.risk;
+                    }
+
+                    // Only lock diagnosis when session has explicitly finished and was stopped
+                    if (data.is_complete === true && data.session_active === false && (data.elapsed || 0) > 0) {
+                        handleSessionComplete();
+                    }
+                })
+                .catch(err => console.error("Telemetry fetch error:", err));
+        }
+
+        function handleSessionComplete() {
+            if (isCompleted) return;
+            isCompleted = true;
+
+            const cd = document.getElementById('timer-countdown');
+            if (cd) cd.innerText = 'Completed';
+            const phase = document.getElementById('session-phase-txt');
+            if (phase) phase.innerText = 'SYNTHESIS READY';
+
+            // Fetch final synced results
+            fetch('/api/data')
+                .then(res => res.json())
+                .then(data => {
+                    const diag = document.getElementById('final-diagnosis-val');
+                    if (diag) diag.innerText = data.face || "NEUTRAL";
+
+                    const mask = document.getElementById('final-masking-val');
+                    if (mask) mask.innerText = (data.masking || "10") + '%';
+
+                    const risk = document.getElementById('final-risk-val');
+                    if (risk) risk.innerText = data.risk || "LOW";
+
+                    const modal = document.getElementById('completionModal');
+                    if (modal) modal.classList.add('active');
+                })
+                .catch(() => {
+                    const modal = document.getElementById('completionModal');
+                    if (modal) modal.classList.add('active');
+                });
+        }
+
+        function completeSessionNow() {
+            const phase = document.getElementById('session-phase-txt');
+            if (phase) phase.innerText = 'FINALIZING SYNTHESIS...';
+            fetch('/stop')
+                .then(() => {
+                    setTimeout(handleSessionComplete, 600);
+                })
+                .catch(() => {
+                    setTimeout(handleSessionComplete, 600);
+                });
+        }
+
+        setInterval(pollSessionTelemetry, 350);
+
+        // ==========================================
+        // PSYFUSION CLINICAL GPT INTERFACE (CHATGPT-STYLE)
+        // ==========================================
+        const sidebar = document.getElementById('chatbot-sidebar');
+        const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('chat-send-btn');
+        const expandBtn = document.getElementById('expand-chat-btn');
+        let chatHistory = [];
+        let isGenerating = false;
+
+        function toggleChatbot() {
+            const isOpen = sidebar.classList.toggle('open');
+            if (isOpen) {
+                setTimeout(() => chatInput.focus(), 300);
+            }
+        }
+
+        function toggleExpandChat() {
+            const isExpanded = sidebar.classList.toggle('expanded');
+            if (expandBtn) {
+                expandBtn.innerText = isExpanded ? '⤢' : '⛶';
+                expandBtn.title = isExpanded ? 'Shrink Window' : 'Expand Window';
+            }
+        }
+
+        function clearChat() {
+            chatHistory = [];
+            chatBody.innerHTML = `
+                <div class="chat-bubble bot-bubble">
+                    <div class="bubble-author">
+                        <span>⚡</span> PSYFUSION CLINICAL GPT
+                    </div>
+                    <div class="bubble-text">
+                        Chat memory cleared. How can I assist you with your mental state, emotional analysis, or clinical therapy techniques?
+                    </div>
+                </div>
+            `;
+        }
+
+        function autoResizeChatInput(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+        }
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        function sendQuickReply(msg) {
+            if (!sidebar.classList.contains('open')) {
+                sidebar.classList.add('open');
+            }
+            if (isGenerating) return;
+            chatInput.value = '';
+            chatInput.style.height = '44px';
+            processUserMessage(msg);
+        }
+
+        function sendChatMessage() {
+            if (isGenerating) return;
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            chatInput.value = '';
+            chatInput.style.height = '44px';
+            processUserMessage(msg);
+        }
+
+        // Lightweight, robust Markdown Parser for clinical responses
+        function formatMarkdown(text) {
+            if (!text) return '';
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            // Headers
+            html = html.replace(/^### (.*$)/gim, '<h4 style="color:#00f3ff; margin:12px 0 6px; font-size:1.05rem; font-family:\'Rajdhani\',sans-serif; letter-spacing:0.5px;">$1</h4>');
+            html = html.replace(/^## (.*$)/gim, '<h3 style="color:#00f3ff; margin:14px 0 8px; font-size:1.15rem; font-family:\'Rajdhani\',sans-serif; letter-spacing:0.5px;">$1</h3>');
+            html = html.replace(/^# (.*$)/gim, '<h2 style="color:#00f3ff; margin:16px 0 10px; font-size:1.25rem; font-family:\'Rajdhani\',sans-serif; letter-spacing:1px;">$1</h2>');
+
+            // Bold & Italic
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#ffffff; font-weight:700;">$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em style="color:#9bc9ff;">$1</em>');
+
+            // Bullet Lists
+            html = html.replace(/^\s*[-*•]\s+(.*)$/gim, '<li style="margin-left:18px; margin-bottom:5px; line-height:1.5;">$1</li>');
+            html = html.replace(/(<li.*<\/li>)/s, '<ul style="padding-left:10px; margin:8px 0;">$1</ul>');
+
+            // Numbered Lists
+            html = html.replace(/^\s*(\d+)\.\s+(.*)$/gim, '<li style="margin-left:18px; margin-bottom:5px; line-height:1.5;">$2</li>');
+
+            // Paragraphs and newlines
+            html = html.replace(/\n\n+/g, '<div style="height:10px;"></div>');
+            html = html.replace(/\n/g, '<br>');
+
+            return html;
+        }
+
+        // ChatGPT-style Word-by-Word Streaming Typewriter Animation
+        function streamBotMessage(fullText, textContainer, onComplete) {
+            const words = fullText.split(/(\s+)/); // Preserves spaces
+            let index = 0;
+            let displayed = '';
+
+            const interval = setInterval(() => {
+                if (index < words.length) {
+                    displayed += words[index];
+                    index++;
+                    // Render partial text with blinking cursor
+                    textContainer.innerHTML = formatMarkdown(displayed) + '<span class="typing-cursor">▌</span>';
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                } else {
+                    clearInterval(interval);
+                    // Final markdown render without cursor
+                    textContainer.innerHTML = formatMarkdown(fullText);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                    if (onComplete) onComplete();
+                }
+            }, 24); // ~40 words/tokens per second for a smooth ChatGPT feel
+        }
+
+        async function processUserMessage(msg) {
+            isGenerating = true;
+            if (sendBtn) sendBtn.disabled = true;
+
+            // Render User Bubble
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble user-bubble';
+            userBubble.innerHTML = `
+                <div class="bubble-author">
+                    <span>👤</span> YOU
+                </div>
+                <div class="bubble-text">${msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            `;
+            chatBody.appendChild(userBubble);
+
+            // Record into multi-turn history
+            chatHistory.push({ role: 'user', content: msg });
+
+            // Create Animated Typing Indicator Bubble
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'chat-bubble bot-bubble';
+            typingBubble.id = 'typing-indicator-bubble';
+            typingBubble.innerHTML = `
+                <div class="bubble-author">
+                    <span>⚡</span> PSYFUSION AI GPT
+                </div>
+                <div class="typing-dots">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+            chatBody.appendChild(typingBubble);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // 1. Try Puter.js in Browser (Answer ANYTHING using Frontier Model)
+            if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
+                try {
+                    const faceVal = document.getElementById('chat-stat-face')?.innerText || 'Neutral';
+                    const voiceVal = document.getElementById('chat-stat-voice')?.innerText || 'Neutral';
+                    const maskVal = document.getElementById('chat-stat-mask')?.innerText || '10%';
+                    const riskVal = document.getElementById('chat-stat-risk')?.innerText || 'LOW';
+
+                    const systemInstruction = `You are PSYFUSION AI, an advanced, omni-competent conversational AI assistant like ChatGPT capable of answering ANY topic in the world with high intelligence, depth, and clarity (science, mathematics, coding, philosophy, creative writing, history, literature, general questions, and emotions).
+When relevant to psychological or emotional state, reference active session telemetry: Face: ${faceVal}, Voice: ${voiceVal}, Masking: ${maskVal}, Risk: ${riskVal}.
+Structure your answers with rich Markdown, bolding, bullet points, headers, and code blocks where helpful.`;
+
+                    const puterMessages = [
+                        { role: 'system', content: systemInstruction },
+                        ...chatHistory.slice(-6).map(h => ({
+                            role: h.role === 'user' ? 'user' : 'assistant',
+                            content: h.content
+                        }))
+                    ];
+
+                    const stream = await Promise.race([
+                        puter.ai.chat(puterMessages, { stream: true }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Puter timeout')), 6000))
+                    ]);
+
+                    if (typingBubble.parentNode) chatBody.removeChild(typingBubble);
+
+                    const botBubble = document.createElement('div');
+                    botBubble.className = 'chat-bubble bot-bubble';
+                    botBubble.innerHTML = `
+                        <div class="bubble-author">
+                            <span>⚡</span> PSYFUSION AI GPT
+                        </div>
+                        <div class="bubble-text"></div>
+                    `;
+                    chatBody.appendChild(botBubble);
+                    const textContainer = botBubble.querySelector('.bubble-text');
+
+                    let fullStreamed = '';
+                    for await (const part of stream) {
+                        const token = part?.text || '';
+                        fullStreamed += token;
+                        textContainer.innerHTML = formatMarkdown(fullStreamed) + '<span class="typing-cursor">▌</span>';
+                        chatBody.scrollTop = chatBody.scrollHeight;
+                    }
+                    textContainer.innerHTML = formatMarkdown(fullStreamed);
+                    chatHistory.push({ role: 'assistant', content: fullStreamed });
+                    isGenerating = false;
+                    if (sendBtn) sendBtn.disabled = false;
+                    return;
+                } catch (e) {
+                    console.log('Puter.js streaming bypassed, using local synthesis engine:', e);
+                }
+            }
+
+            // 2. Fallback to Local Synthesis Engine (Knowledge Base + Math + Coding + Biometrics)
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: msg,
+                    history: chatHistory.slice(-8)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (typingBubble.parentNode) {
+                    chatBody.removeChild(typingBubble);
+                }
+
+                const botText = data.response || "Knowledge synthesis completed.";
+                chatHistory.push({ role: 'assistant', content: botText });
+
+                // Create Bot Bubble with streaming container
+                const botBubble = document.createElement('div');
+                botBubble.className = 'chat-bubble bot-bubble';
+                botBubble.innerHTML = `
+                    <div class="bubble-author">
+                        <span>⚡</span> PSYFUSION AI GPT
+                    </div>
+                    <div class="bubble-text"></div>
+                `;
+                chatBody.appendChild(botBubble);
+                const textContainer = botBubble.querySelector('.bubble-text');
+
+                // Stream bot message word-by-word
+                streamBotMessage(botText, textContainer, () => {
+                    isGenerating = false;
+                    if (sendBtn) sendBtn.disabled = false;
+                });
+            })
+            .catch(err => {
+                console.error("Chat error:", err);
+                if (typingBubble.parentNode) {
+                    chatBody.removeChild(typingBubble);
+                }
+                const errBubble = document.createElement('div');
+                errBubble.className = 'chat-bubble bot-bubble';
+                errBubble.innerHTML = `
+                    <div class="bubble-author">
+                        <span>⚡</span> PSYFUSION AI GPT
+                    </div>
+                    <div class="bubble-text" style="color: #ff6b8b;">
+                        ⚠ Neural synthesis connection interrupted. Please try again.
+                    </div>
+                `;
+                chatBody.appendChild(errBubble);
+                isGenerating = false;
+                if (sendBtn) sendBtn.disabled = false;
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+
+        // Cursor Mode Switcher
+        let cursorMode = 0; // 0: Hybrid (Syringe default + Lens hover), 1: Syringe everywhere, 2: Lens everywhere
+        function cycleCursorMode() {
+            cursorMode = (cursorMode + 1) % 3;
+            const btn = document.getElementById('cursor-toggle-btn');
+            document.body.classList.remove('cursor-mode-syringe', 'cursor-mode-lens');
+            if (cursorMode === 0) {
+                if (btn) btn.innerText = '💉';
+                if (btn) btn.title = 'Cursor: Injection Syringe + Lens Hover (Hybrid)';
+            } else if (cursorMode === 1) {
+                document.body.classList.add('cursor-mode-syringe');
+                if (btn) btn.innerText = '💉';
+                if (btn) btn.title = 'Cursor: Injection Syringe Mode';
+            } else {
+                document.body.classList.add('cursor-mode-lens');
+                if (btn) btn.innerText = '🎯';
+                if (btn) btn.title = 'Cursor: Optical Biometric Lens Mode';
+            }
+        }
+    </script>
+</body>
+</html>

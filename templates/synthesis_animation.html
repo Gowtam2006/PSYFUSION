@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSYFUSION - Synthesis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-navy: #04060d;
+            --cyan: #00f3ff;
+            --violet: #7a00ff;
+            --magenta: #ff00ff;
+            --grid-line: rgba(0, 243, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-navy);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        /* Custom Premium Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: rgba(4, 6, 13, 0.8); border-left: 1px solid rgba(0, 243, 255, 0.1); }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, var(--cyan), var(--violet)); border-radius: 10px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, var(--cyan), var(--magenta)); }
+
+        /* Background Layers */
+        #bgCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .vignette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, transparent 40%, #04060d 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.2) 51%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* Header */
+        header {
+            position: relative; z-index: 10;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 60px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            background: rgba(4, 6, 13, 0.6);
+            backdrop-filter: blur(10px);
+        }
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            position: relative;
+            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00f3ff, #0000ff, #7a00ff, #ff00ff, #ff0000);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rgbText 4s linear infinite;
+        }
+        @keyframes rgbText { to { background-position: 200% center; } }
+        .live-indicator {
+            display: flex; align-items: center; gap: 12px;
+            font-family: 'Cinzel', serif; color: var(--cyan); letter-spacing: 2px;
+        }
+        .dot {
+            width: 10px; height: 10px; background: var(--cyan); border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan); animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        /* Main Layout */
+        .main-wrapper {
+            position: relative; z-index: 10;
+            padding: 40px 60px;
+            display: flex; gap: 40px;
+            flex: 1;
+        }
+
+        /* Panels */
+        .side-panel {
+            flex: 1;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .center-panel {
+            flex: 2;
+            display: flex; flex-direction: column;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 20px;
+            background: rgba(4, 6, 13, 0.5);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1) inset;
+            align-items: center; justify-content: center;
+        }
+
+        .hud-box {
+            border: 1px solid rgba(122, 0, 255, 0.3);
+            border-radius: 15px;
+            background: rgba(4, 6, 13, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+        }
+        .hud-box::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--violet), transparent);
+        }
+
+        .panel-title {
+            font-family: 'Cinzel', serif;
+            color: var(--violet);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(122, 0, 255, 0.5);
+        }
+
+        /* Center Synthesis Graphics */
+        .synthesis-title {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 3rem;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(135deg, #fff, var(--cyan));
+            -webkit-background-clip: text;
+            text-shadow: 0 0 30px rgba(0,243,255,0.4);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #synthesisCanvas {
+            width: 100%;
+            height: 400px;
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(122,0,255,0.2);
+            background: radial-gradient(circle at center, rgba(122,0,255,0.1) 0%, transparent 70%);
+        }
+
+        /* Data Streams */
+        .data-stream {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: var(--cyan);
+            line-height: 1.6;
+            opacity: 0.8;
+            height: 150px;
+            overflow-y: hidden;
+            position: relative;
+        }
+        .data-stream::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50px;
+            background: linear-gradient(to top, rgba(4,6,13,1), transparent);
+        }
+
+        /* Image Gathers (CSS simulated scans) */
+        .scan-img {
+            width: 100%;
+            height: 120px;
+            border: 1px solid var(--magenta);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            background: repeating-linear-gradient(0deg, #000, #000 2px, #111 2px, #111 4px);
+        }
+        .scan-line-anim {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--magenta);
+            box-shadow: 0 0 10px var(--magenta);
+            animation: scanUpDown 2s infinite ease-in-out alternate;
+        }
+        @keyframes scanUpDown {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+
+        /* Spectrogram CSS */
+        .spectrogram {
+            display: flex; align-items: flex-end; gap: 2px; height: 100px; padding-top: 20px;
+        }
+        .spec-bar {
+            flex: 1; background: linear-gradient(to top, var(--violet), var(--cyan));
+            border-radius: 2px 2px 0 0;
+            animation: specBounce 0.5s infinite alternate ease-in-out;
+        }
+        @keyframes specBounce {
+            0% { height: 10%; }
+            100% { height: 100%; }
+        }
+
+        .back-btn {
+            display: inline-block; margin-top: 30px;
+            padding: 15px 40px;
+            border: 1px solid var(--cyan);
+            border-radius: 30px;
+            color: #fff; text-decoration: none;
+            font-family: 'Cinzel', serif; font-size: 1.1rem;
+            background: rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover {
+            background: var(--cyan);
+            color: var(--bg-navy);
+            box-shadow: 0 0 20px var(--cyan);
+        }
+
+        /* Global Cursor */
+        body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" width="32" height="32" shape-rendering="crispEdges"><rect x="1" y="0" width="2" height="1"/><rect x="6" y="0" width="2" height="1"/><rect x="0" y="1" width="1" height="3"/><rect x="3" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="3"/><rect x="4" y="2" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="1" y="1" width="2" height="1" fill="%23ff0000"/><rect x="6" y="1" width="2" height="1" fill="%23ff0000"/><rect x="1" y="2" width="3" height="1" fill="%23ff0000"/><rect x="5" y="2" width="3" height="1" fill="%23ff0000"/><rect x="1" y="3" width="7" height="2" fill="%23ff0000"/><rect x="2" y="5" width="5" height="1" fill="%23ff0000"/><rect x="3" y="6" width="3" height="1" fill="%23ff0000"/><rect x="4" y="7" width="1" height="1" fill="%23ff0000"/><rect x="1" y="1" width="1" height="1" fill="%23fff"/></svg>') 16 16, auto !important; }
+        a, button, .cyber-btn, .back-btn { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" width="32" height="32" shape-rendering="crispEdges"><rect x="1" y="0" width="2" height="1"/><rect x="6" y="0" width="2" height="1"/><rect x="0" y="1" width="1" height="3"/><rect x="3" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="3"/><rect x="4" y="2" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="1" y="1" width="2" height="1" fill="%23ff0000"/><rect x="6" y="1" width="2" height="1" fill="%23ff0000"/><rect x="1" y="2" width="3" height="1" fill="%23ff0000"/><rect x="5" y="2" width="3" height="1" fill="%23ff0000"/><rect x="1" y="3" width="7" height="2" fill="%23ff0000"/><rect x="2" y="5" width="5" height="1" fill="%23ff0000"/><rect x="3" y="6" width="3" height="1" fill="%23ff0000"/><rect x="4" y="7" width="1" height="1" fill="%23ff0000"/><rect x="1" y="1" width="1" height="1" fill="%23fff"/></svg>') 16 16, pointer !important; }
+
+        @keyframes pulseGlow { 0% { opacity: 0.3; } 100% { opacity: 0.6; } }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="vignette"></div>
+    <div class="scanlines"></div>
+
+    <header>
+        <div class="logo">PSYFUSION</div>
+        <div class="live-indicator">
+            <div class="dot"></div>
+            DATA SYNTHESIS ACTIVE
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <!-- Left Panel: Audio Gather -->
+        <div class="side-panel">
+            <div class="hud-box">
+                <div class="panel-title">Vocal Frequency Gather</div>
+                <div class="spectrogram" id="spectrogram">
+                    <!-- Bars injected by JS -->
+                </div>
+            </div>
+            <div class="hud-box">
+                <div class="panel-title">Cognitive Thermal Map</div>
+                <div class="scan-img">
+                    <canvas id="thermalCanvas" width="300" height="120"></canvas>
+                    <div class="scan-line-anim"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel: Massive Animation -->
+        <div class="center-panel">
+            <div class="synthesis-title">Core Synthesis</div>
+            <canvas id="synthesisCanvas" width="600" height="400"></canvas>
+            <a href="/" class="back-btn">RETURN TO DASHBOARD</a>
+        </div>
+
+        <!-- Right Panel: Data Stream -->
+        <div class="side-panel">
+            <div class="hud-box">
+                <div class="panel-title">Raw Logic Stream</div>
+                <div class="data-stream" id="dataStream">
+                    Initializing neuro-synthesis...<br>
+                    Fetching deep layer parameters...<br>
+                    Normalizing cross-modal indices...<br>
+                </div>
+            </div>
+            <div class="hud-box">
+                <div class="panel-title">Biometric Aggregation</div>
+                <div class="scan-img" style="border-color: var(--cyan);">
+                    <canvas id="bioCanvas" width="300" height="120"></canvas>
+                    <div class="scan-line-anim" style="background: var(--cyan); box-shadow: 0 0 10px var(--cyan); animation-duration: 3s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // BACKGROUND NEURAL WAVES
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        let bgTime = 0;
+        function drawBackground() {
+            bgCtx.fillStyle = 'rgba(4, 6, 13, 0.1)';
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            const colors = ['rgba(0, 243, 255, 0.3)', 'rgba(122, 0, 255, 0.3)', 'rgba(255, 0, 255, 0.2)'];
+            for (let c = 0; c < colors.length; c++) {
+                bgCtx.beginPath();
+                for (let x = 0; x < bgCanvas.width; x += 20) {
+                    let y = bgCanvas.height/2 + Math.sin(x * 0.005 + bgTime + c) * 150 + Math.cos(x * 0.002 - bgTime) * 100;
+                    if (x === 0) bgCtx.moveTo(x, y + c*50);
+                    else bgCtx.lineTo(x, y + c*50);
+                }
+                bgCtx.strokeStyle = colors[c];
+                bgCtx.lineWidth = 2;
+                bgCtx.stroke();
+            }
+            bgTime += 0.01;
+            requestAnimationFrame(drawBackground);
+        }
+        drawBackground();
+
+        // SPECTROGRAM
+        const spec = document.getElementById('spectrogram');
+        for(let i=0; i<30; i++) {
+            let bar = document.createElement('div');
+            bar.className = 'spec-bar';
+            bar.style.animationDelay = `${Math.random()}s`;
+            spec.appendChild(bar);
+        }
+
+        // THERMAL CANVAS
+        const tCanv = document.getElementById('thermalCanvas');
+        const tCtx = tCanv.getContext('2d');
+        let tTime = 0;
+        function drawThermal() {
+            tCtx.fillStyle = '#000';
+            tCtx.fillRect(0,0,300,120);
+            for(let i=0; i<5; i++) {
+                let grad = tCtx.createRadialGradient(
+                    150 + Math.sin(tTime+i)*50, 60 + Math.cos(tTime+i*2)*20, 10,
+                    150 + Math.sin(tTime+i)*50, 60 + Math.cos(tTime+i*2)*20, 60
+                );
+                grad.addColorStop(0, 'rgba(255,0,0,0.8)');
+                grad.addColorStop(0.5, 'rgba(255,255,0,0.4)');
+                grad.addColorStop(1, 'transparent');
+                tCtx.fillStyle = grad;
+                tCtx.beginPath();
+                tCtx.arc(150 + Math.sin(tTime+i)*50, 60 + Math.cos(tTime+i*2)*20, 60, 0, Math.PI*2);
+                tCtx.fill();
+            }
+            tTime += 0.02;
+            requestAnimationFrame(drawThermal);
+        }
+        drawThermal();
+
+        // BIO CANVAS
+        const bCanv = document.getElementById('bioCanvas');
+        const bCtx = bCanv.getContext('2d');
+        let bTime = 0;
+        function drawBio() {
+            bCtx.fillStyle = '#000';
+            bCtx.fillRect(0,0,300,120);
+            bCtx.beginPath();
+            bCtx.moveTo(0, 60);
+            for(let x=0; x<300; x++) {
+                let y = 60 + (Math.random() > 0.95 ? (Math.random()-0.5)*80 : Math.sin(x*0.1 - bTime*5)*10);
+                bCtx.lineTo(x, y);
+            }
+            bCtx.strokeStyle = '#00f3ff';
+            bCtx.lineWidth = 1.5;
+            bCtx.stroke();
+            bTime += 0.05;
+            requestAnimationFrame(drawBio);
+        }
+        drawBio();
+
+        // DATA STREAM LOGIC
+        const stream = document.getElementById('dataStream');
+        const logs = [
+            "Correlating facial micro-expressions...",
+            "Vocal pitch variance exceeds threshold.",
+            "Masking probability updated: P(M)=0.12",
+            "Checking historical clinical baselines...",
+            "Executing quantum vector comparison...",
+            "Alignment complete. Synthesis optimal."
+        ];
+        setInterval(() => {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${logs[Math.floor(Math.random()*logs.length)]}`;
+            stream.prepend(div);
+            if(stream.children.length > 10) stream.removeChild(stream.lastChild);
+        }, 800);
+
+        // MASSIVE CENTER ANIMATION (3D Rotating Node Core)
+        const synCanv = document.getElementById('synthesisCanvas');
+        const sCtx = synCanv.getContext('2d');
+        let nodes = [];
+        for(let i=0; i<80; i++) {
+            nodes.push({
+                x: (Math.random()-0.5)*2,
+                y: (Math.random()-0.5)*2,
+                z: (Math.random()-0.5)*2
+            });
+        }
+        let rot = 0;
+        function drawSynthesis() {
+            sCtx.clearRect(0,0,600,400);
+            
+            let grad = sCtx.createRadialGradient(300, 200, 10, 300, 200, 150);
+            grad.addColorStop(0, 'rgba(0,243,255,0.4)');
+            grad.addColorStop(0.5, 'rgba(122,0,255,0.1)');
+            grad.addColorStop(1, 'transparent');
+            sCtx.fillStyle = grad;
+            sCtx.fillRect(0,0,600,400);
+
+            let projected = [];
+            for(let n of nodes) {
+                let len = Math.sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+                let nx = (n.x/len) * 150;
+                let ny = (n.y/len) * 150;
+                let nz = (n.z/len) * 150;
+
+                let rx = nx * Math.cos(rot) - nz * Math.sin(rot);
+                let rz = nx * Math.sin(rot) + nz * Math.cos(rot);
+                
+                let ry = ny * Math.cos(rot*0.5) - rz * Math.sin(rot*0.5);
+                let fz = ny * Math.sin(rot*0.5) + rz * Math.cos(rot*0.5);
+
+                let scale = 300 / (300 - fz);
+                projected.push({
+                    x: 300 + rx * scale,
+                    y: 200 + ry * scale,
+                    z: fz,
+                    scale: scale
+                });
+            }
+
+            sCtx.strokeStyle = 'rgba(0, 243, 255, 0.15)';
+            sCtx.lineWidth = 1;
+            for(let i=0; i<projected.length; i++) {
+                for(let j=i+1; j<projected.length; j++) {
+                    let dx = projected[i].x - projected[j].x;
+                    let dy = projected[i].y - projected[j].y;
+                    if(dx*dx + dy*dy < 5000) {
+                        sCtx.beginPath();
+                        sCtx.moveTo(projected[i].x, projected[i].y);
+                        sCtx.lineTo(projected[j].x, projected[j].y);
+                        sCtx.stroke();
+                    }
+                }
+            }
+
+            for(let p of projected) {
+                sCtx.fillStyle = p.z > 0 ? '#00f3ff' : '#7a00ff';
+                sCtx.beginPath();
+                sCtx.arc(p.x, p.y, p.scale * 3, 0, Math.PI*2);
+                sCtx.fill();
+            }
+
+            rot += 0.005;
+            requestAnimationFrame(drawSynthesis);
+        }
+        drawSynthesis();
+
+        window.addEventListener('resize', () => {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

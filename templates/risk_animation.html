@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSYFUSION | Risk Analysis</title>
+    <!-- Removed Chart.js -->
+    
+    <!-- Premium Web Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cyan: #00f3ff;
+            --electric-blue: #0066ff;
+            --violet: #7a00ff;
+            --magenta: #ff007f;
+            --neon-green: #00ffaa;
+            --bg-navy: #04060d;
+            --glass-bg: rgba(10, 14, 25, 0.65);
+            --glass-border: rgba(200, 210, 230, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-navy);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Custom Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(4, 6, 13, 0.8);
+            border-left: 1px solid rgba(0, 243, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--cyan), var(--violet));
+            border-radius: 10px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, var(--cyan), var(--magenta));
+        }
+
+        /* ---------------- BACKGROUND LAYER ---------------- */
+        #bgCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -3;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, transparent 30%, #020308 100%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .scan-lines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
+            z-index: 998;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* ---------------- HEADER ---------------- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 30px 60px;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            position: relative;
+            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rgbText 4s linear infinite;
+        }
+        @keyframes rgbText {
+            to { background-position: 200% center; }
+        }
+
+        /* ---------------- MAIN CONTENT ---------------- */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 60px 40px;
+            z-index: 10;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 50px;
+            backdrop-filter: blur(15px);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            max-width: 800px;
+            min-height: 500px;
+        }
+
+        .glass-panel::after {
+            content: ''; position: absolute; top: 20px; right: 20px; width: 30px; height: 30px;
+            border-top: 2px solid rgba(0, 243, 255, 0.3); border-right: 2px solid rgba(0, 243, 255, 0.3);
+        }
+        .glass-panel::before {
+            content: ''; position: absolute; bottom: 20px; left: 20px; width: 30px; height: 30px;
+            border-bottom: 2px solid rgba(255, 0, 127, 0.3); border-left: 2px solid rgba(255, 0, 127, 0.3);
+        }
+
+        .panel-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--cyan);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(0,243,255,0.4);
+        }
+
+        #status-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.3rem;
+            color: #b4bccf;
+            font-style: italic;
+            margin-bottom: 40px;
+            min-height: 30px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px; width: 100%;
+            margin-bottom: 30px;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Results */
+        .result-container {
+            display: none; opacity: 0; transition: opacity 1s ease;
+            flex-direction: column; align-items: center; text-align: center;
+        }
+        .result-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem; color: #a0a5b5; margin-bottom: 10px; letter-spacing: 3px; text-transform: uppercase;
+        }
+        .huge-emotion {
+            font-family: 'Cinzel', serif;
+            font-size: 6.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--cyan), var(--violet), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+            filter: drop-shadow(0 0 20px rgba(122, 0, 255, 0.4));
+            animation: glowText 4s infinite alternate;
+        }
+        
+        .cyber-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px 40px;
+            display: inline-block;
+            color: #fff; text-decoration: none;
+            font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+            position: relative; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.05), 0 8px 25px rgba(0,0,0,0.4);
+            transition: all 0.4s;
+        }
+        .cyber-btn::before {
+            content: ''; position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border-radius: 12px; background: linear-gradient(135deg, var(--cyan), transparent, var(--violet));
+            z-index: -1; opacity: 0.4; transition: 0.4s;
+        }
+        .cyber-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.2), 0 15px 30px rgba(0,0,0,0.6);
+            border-color: rgba(0, 243, 255, 0.6);
+        }
+        .cyber-btn:hover::before { opacity: 1; }
+
+        @keyframes glowText { 0% { filter: drop-shadow(0 0 15px rgba(122,0,255,0.3)); } 100% { filter: drop-shadow(0 0 35px rgba(0,243,255,0.6)); } }
+        /* Minecraft Red Heart Cursor */
+        body {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" width="32" height="32" shape-rendering="crispEdges"><rect x="1" y="0" width="2" height="1"/><rect x="6" y="0" width="2" height="1"/><rect x="0" y="1" width="1" height="3"/><rect x="3" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="3"/><rect x="4" y="2" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="1" y="1" width="2" height="1" fill="%23ff0000"/><rect x="6" y="1" width="2" height="1" fill="%23ff0000"/><rect x="1" y="2" width="3" height="1" fill="%23ff0000"/><rect x="5" y="2" width="3" height="1" fill="%23ff0000"/><rect x="1" y="3" width="7" height="2" fill="%23ff0000"/><rect x="2" y="5" width="5" height="1" fill="%23ff0000"/><rect x="3" y="6" width="3" height="1" fill="%23ff0000"/><rect x="4" y="7" width="1" height="1" fill="%23ff0000"/><rect x="1" y="1" width="1" height="1" fill="%23fff"/></svg>') 16 16, auto !important;
+        }
+        
+        a, button, .cyber-btn, .hud-icon {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" width="32" height="32" shape-rendering="crispEdges"><rect x="1" y="0" width="2" height="1"/><rect x="6" y="0" width="2" height="1"/><rect x="0" y="1" width="1" height="3"/><rect x="3" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="3"/><rect x="4" y="2" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="1" y="1" width="2" height="1" fill="%23ff0000"/><rect x="6" y="1" width="2" height="1" fill="%23ff0000"/><rect x="1" y="2" width="3" height="1" fill="%23ff0000"/><rect x="5" y="2" width="3" height="1" fill="%23ff0000"/><rect x="1" y="3" width="7" height="2" fill="%23ff0000"/><rect x="2" y="5" width="5" height="1" fill="%23ff0000"/><rect x="3" y="6" width="3" height="1" fill="%23ff0000"/><rect x="4" y="7" width="1" height="1" fill="%23ff0000"/><rect x="1" y="1" width="1" height="1" fill="%23fff"/></svg>') 16 16, pointer !important;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+    <div class="vignette"></div>
+    <div class="scan-lines"></div>
+
+    <header>
+        <div class="logo">PSYFUSION</div>
+    </header>
+
+    <div class="main-wrapper">
+        <div class="glass-panel">
+            <h2 class="panel-title" id="main-title">Session Analysis</h2>
+            <div id="status-text">Initializing parameters...</div>
+            
+            <div class="chart-container" id="chart-wrapper" style="height: 400px; display: flex; justify-content: center; align-items: center;">
+                <canvas id="radarCanvas" width="400" height="400"></canvas>
+            </div>
+
+            <div class="result-container" id="result-wrapper">
+                <div class="result-subtitle">CLINICAL RISK LEVEL</div>
+                <div class="huge-emotion" id="final-risk">{{ risk }}</div>
+                <a href="/" class="cyber-btn">Return to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Custom Neural-Wave Background
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let time = 0;
+        function drawWaves() {
+            ctx.fillStyle = 'rgba(4, 6, 13, 0.15)'; 
+            ctx.fillRect(0, 0, width, height);
+            ctx.globalCompositeOperation = 'lighter';
+            const lines = 45; const yCenter = height * 0.55;
+            for (let i = 0; i < lines; i++) {
+                ctx.beginPath();
+                let yOffset = (i - lines/2) * 20; 
+                let parallaxX = Math.sin(time * 0.1) * 50;
+                for (let x = -100; x < width + 100; x += 40) {
+                    let nx = x + parallaxX;
+                    let noise1 = Math.sin(nx * 0.003 + time * 0.4 + i * 0.1);
+                    let noise2 = Math.sin(nx * 0.006 - time * 0.2 + i * 0.05);
+                    let noise3 = Math.cos(nx * 0.002 + time * 0.6 - i * 0.02);
+                    let y = yCenter + yOffset + (noise1 * 90) + (noise2 * 50) + (noise3 * 30);
+                    let centerDist = Math.abs(x - width/2) / (width/2);
+                    y += Math.pow(centerDist, 2) * 150;
+                    if (x === -100) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                let grad = ctx.createLinearGradient(0, 0, width, 0);
+                grad.addColorStop(0, `rgba(0, 243, 255, ${0.05 + (i/lines)*0.15})`);
+                grad.addColorStop(0.4, `rgba(0, 102, 255, ${0.05 + (i/lines)*0.15})`);
+                grad.addColorStop(0.7, `rgba(122, 0, 255, ${0.05 + (i/lines)*0.15})`);
+                grad.addColorStop(1, `rgba(255, 0, 127, ${0.05 + (i/lines)*0.15})`);
+                ctx.strokeStyle = grad; ctx.lineWidth = 1.2; ctx.stroke();
+            }
+            for(let p = 0; p < 80; p++) {
+                let px = (Math.sin(p*234 + time*0.1) * 0.5 + 0.5) * width;
+                let py = (Math.cos(p*112 + time*0.15) * 0.5 + 0.5) * height;
+                let r = px > width*0.7 ? 255 : (px > width*0.4 ? 122 : 0);
+                let g = px < width*0.4 ? 243 : (px < width*0.7 ? 0 : 0);
+                let b = px > width*0.7 ? 127 : 255;
+                let alpha = (Math.sin(time*2 + p)*0.5 + 0.5) * 0.8;
+                ctx.beginPath(); ctx.arc(px, py, 1.5, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`; ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            time += 0.02;
+            requestAnimationFrame(drawWaves);
+        }
+        drawWaves();
+
+        // BIO-METRIC THREAT RADAR ANIMATION
+        const radarCanvas = document.getElementById('radarCanvas');
+        const rCtx = radarCanvas.getContext('2d');
+        const cx = 200, cy = 200, radius = 180;
+        let scanAngle = 0;
+        let points = [];
+        for(let i=0; i<15; i++) {
+            points.push({
+                angle: Math.random() * Math.PI * 2,
+                dist: Math.random() * radius,
+                life: 0,
+                maxLife: Math.random() * 50 + 50
+            });
+        }
+
+        const phases = [
+            "Scanning neurological baselines...",
+            "Detecting micro-facial anomalies...",
+            "Cross-referencing vocal tension...",
+            "Calculating cultural masking density...",
+            "Aggregating clinical risk vectors..."
+        ];
+
+        let seqTime = 0;
+        let phaseIndex = 0;
+        const maxTime = 120; 
+        const statusEl = document.getElementById('status-text');
+
+        // Color based on risk level
+        const riskLevel = "{{ risk }}".toLowerCase();
+        let radarColor = '#00f3ff'; // cyan default
+        if(riskLevel.includes('high') || riskLevel.includes('critical')) radarColor = '#ff0000';
+        if(riskLevel.includes('moderate')) radarColor = '#ff7f00';
+
+        function updateRadar() {
+            if (seqTime >= maxTime) { finishAnimation(); return; }
+            if (seqTime % 24 === 0 && phaseIndex < phases.length) {
+                statusEl.innerText = phases[phaseIndex];
+                phaseIndex++;
+            }
+
+            // Clear and draw grid
+            rCtx.clearRect(0,0,400,400);
+            rCtx.strokeStyle = 'rgba(0, 243, 255, 0.2)';
+            rCtx.lineWidth = 1;
+            
+            // Circles
+            for(let r=45; r<=radius; r+=45) {
+                rCtx.beginPath(); rCtx.arc(cx, cy, r, 0, Math.PI*2); rCtx.stroke();
+            }
+            // Crosshairs
+            rCtx.beginPath(); rCtx.moveTo(cx, cy-radius); rCtx.lineTo(cx, cy+radius); rCtx.stroke();
+            rCtx.beginPath(); rCtx.moveTo(cx-radius, cy); rCtx.lineTo(cx+radius, cy); rCtx.stroke();
+
+            // Sweep
+            scanAngle += 0.05;
+            let sweepGrad = rCtx.createConicGradient(scanAngle, cx, cy);
+            sweepGrad.addColorStop(0, 'rgba(0,0,0,0)');
+            sweepGrad.addColorStop(0.9, radarColor + '11');
+            sweepGrad.addColorStop(1, radarColor + '88');
+            rCtx.fillStyle = sweepGrad;
+            rCtx.beginPath();
+            rCtx.moveTo(cx, cy);
+            rCtx.arc(cx, cy, radius, scanAngle - Math.PI/4, scanAngle);
+            rCtx.fill();
+
+            // Line
+            rCtx.strokeStyle = radarColor;
+            rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            rCtx.moveTo(cx, cy);
+            rCtx.lineTo(cx + Math.cos(scanAngle)*radius, cy + Math.sin(scanAngle)*radius);
+            rCtx.stroke();
+
+            // Blips
+            for(let p of points) {
+                // If sweep passes the point
+                let diff = scanAngle % (Math.PI*2) - p.angle;
+                if(diff > 0 && diff < 0.2) p.life = p.maxLife;
+
+                if(p.life > 0) {
+                    rCtx.fillStyle = `rgba(255, 255, 255, ${p.life/p.maxLife})`;
+                    rCtx.beginPath();
+                    rCtx.arc(cx + Math.cos(p.angle)*p.dist, cy + Math.sin(p.angle)*p.dist, 3, 0, Math.PI*2);
+                    rCtx.fill();
+                    p.life--;
+                }
+            }
+
+            seqTime++;
+            requestAnimationFrame(updateRadar);
+        }
+
+        function finishAnimation() {
+            statusEl.innerText = "Analysis Complete";
+            setTimeout(() => {
+                document.getElementById('chart-wrapper').style.opacity = 0;
+                document.getElementById('main-title').style.display = 'none';
+                setTimeout(() => {
+                    document.getElementById('chart-wrapper').style.display = 'none';
+                    const resultWrapper = document.getElementById('result-wrapper');
+                    resultWrapper.style.display = 'flex';
+                    setTimeout(() => { resultWrapper.style.opacity = 1; }, 50);
+                }, 500); 
+            }, 500); 
+        }
+        setTimeout(updateRadar, 500);
+    </script>
+</body>
+</html>
